@@ -28,5 +28,3 @@ _Rules index — generated from the rule-module frontmatter. Do not edit between
 - `typescript` — TypeScript
 - `webhooks` — Webhooks
 <!-- END f4d-kit:rules -->
-
-## Imported Claude Cowork project instructions
