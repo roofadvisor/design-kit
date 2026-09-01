@@ -96,7 +96,7 @@ let pass = 0;
 const fails = [];
 for (const [label, cmd] of checks) {
   let ok = true, out = '';
-  try { out = execSync(cmd, { cwd: KIT_ROOT, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, DS_REQUIRE_BROWSER: '1' } }).toString(); }
+  try { out = execSync(cmd, { cwd: KIT_ROOT, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, DS_REQUIRE_BROWSER: '1', DS_INVOKE_CWD: process.cwd() } }).toString(); }
   catch (e) { ok = false; out = (e.stdout || '').toString() + (e.stderr || '').toString(); }
   console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${label}`);
   if (ok) pass++; else fails.push([label, out.trim().split('\n').slice(-6).join('\n')]);

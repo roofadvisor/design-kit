@@ -18,8 +18,9 @@
  *   --strict → exit 1 on any HIGH finding (use as a gate). Default: report, exit 0.
  */
 import { resolve } from 'node:path';
+import { loadPlaywright } from './_playwright.mjs';
 let chromium;
-try { ({ chromium } = await import('playwright')); }
+try { ({ chromium } = await loadPlaywright()); }
 catch {
   // A missing browser must not read as a pass. Without DS_REQUIRE_BROWSER the gate
   // stays skippable for local convenience; CI and accuracy_report set it to 1, so a
