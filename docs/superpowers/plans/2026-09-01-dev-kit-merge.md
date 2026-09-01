@@ -327,15 +327,25 @@ Verify: `bash tests/conformance_test.sh` returns `pass=49 fail=0`.
 
 | ID | Rule | Should | Today | Status |
 |---|---|---|---|---|
-| D-01 | No hardcoded colour, size, or timing — every value is a token | GATE | **GATE** (`lint_hardcodes`) | done |
-| D-02 | A component never reads a primitive token | GATE | **PROSE** | open |
-| D-03 | Every token has a light and a dark value | GATE | **GATE** (`validate_contrast`) | done |
-| D-04 | Text meets WCAG 2.2 AA in both themes, measured not assumed | GATE | **GATE** (`verify_states`) | done |
-| D-05 | Every interactive component ships all eight states | GATE | **GATE** (`verify_states`) | done |
-| D-06 | Every interactive component has a rendered state harness | GATE | **PROSE** | open |
-| D-07 | Destructive actions wear the danger token everywhere | GATE | **GATE** (`lint_intent`) | done |
-| D-08 | Motion respects prefers-reduced-motion with no content loss | GATE | **GATE** (`verify_reduced_motion`) | done |
-| D-09 | A design change has a SemVer level and a changelog entry | PROSE | **PROSE** | open |
+| DS-01 | No hardcoded colour, size, or timing — every value is a token | GATE | PROSE | lint_hardcodes wired into an automatic gate |
+| DS-02 | A component never reads a primitive token | GATE | PROSE | open |
+| DS-03 | Every token has a light and a dark value | GATE | PROSE | a per-token light/dark completeness check, wired into an automatic gate |
+| DS-04 | Text meets WCAG 2.2 AA in both themes, measured not assumed | GATE | PROSE | verify_states/validate_contrast wired into an automatic gate |
+| DS-05 | Every interactive component ships all eight states | GATE | PROSE | an eight-state completeness check, wired into an automatic gate |
+| DS-06 | Every interactive component has a rendered state harness | GATE | PROSE | open |
+| DS-07 | Destructive actions wear the danger token everywhere | GATE | PROSE | lint_intent wired into an automatic gate |
+| DS-08 | Motion respects prefers-reduced-motion with no content loss | GATE | PROSE | verify_reduced_motion wired into an automatic gate |
+| DS-09 | A design change has a SemVer level and a changelog entry | PROSE | PROSE | open |
+```
+
+Every row is `PROSE` on purpose. Task 4 audited each claimed gate and found that
+nothing automatic runs the design scripts yet — they are reachable only through
+the manual `/gate` command. Two of the originally-claimed gates were also the
+wrong script for the rule: `validate_contrast.py` does not check per-token
+light/dark completeness, and `verify_states.mjs` does not check eight-state
+completeness. Task 8 Step 6a re-audits and promotes what its wiring genuinely
+enforces. A registry row claiming a gate that does not run is the one defect this
+file exists to prevent.
 ```
 
 - [ ] **Step 2: Run the registry test**
@@ -350,7 +360,7 @@ Expected: test suite passes; validator exits 0.
 
 ```bash
 git add templates/rules/REGISTRY.md
-git commit -m "feat: register design rules D-01..D-09"
+git commit -m "feat: register design rules DS-01..DS-09"
 ```
 
 ---
@@ -427,7 +437,7 @@ git commit -m "feat: response-format rules module, always applied"
 - Test: `bash tests/conformance_test.sh`
 
 **Interfaces:**
-- Consumes: Task 3's module ids, Task 4's `D-*` registry IDs.
+- Consumes: Task 3's module ids, Task 4's `DS-*` registry IDs.
 - Produces: `.claude/.framework-state.json` key `bundles: []` read by Task 10's audit; `decided_modules` entries `design-tokens`/`design-a11y`/`design-components`/`design-handoff` consumed by the agent-selection rule.
 
 - [ ] **Step 1: Replace the `frontend` row in Round 3**
@@ -660,6 +670,25 @@ bash tests/hooks_test.sh
 ```
 
 Expected: all cases PASS, including the two added in Step 1.
+
+- [ ] **Step 6a: Promote the design registry rows the wiring now enforces**
+
+Added 2026-09-01 (ruling R-12). Task 4 recorded every `DS-*` row as `PROSE`,
+honestly, because at that point nothing automatic ran the design gates — they
+were reachable only through the manual `/gate` command. Steps 5 and 3 of this
+task change that: the design gate now runs inside `scripts/verify.sh`, and
+`verify-record.sh` records it.
+
+Re-audit each `DS-*` row against what is now wired, and promote only the rows a
+script genuinely enforces end to end. Candidates, each to be checked rather than
+assumed: `DS-01` (`lint_hardcodes`), `DS-04` (`verify_states`), `DS-07`
+(`lint_intent`), `DS-08` (`verify_reduced_motion`). Leave `DS-03` and `DS-05` at
+`PROSE` — Task 4 established that no per-token light/dark completeness check and
+no eight-state completeness check exist; the named scripts check adjacent things.
+Promoting a row whose check does not exist is the exact failure the registry is
+built to prevent.
+
+Verify: `bash tests/render_registry_test.sh` still passes.
 
 - [ ] **Step 7: Commit**
 
@@ -984,7 +1013,7 @@ git commit -m "docs: dev-kit 2.0.0 release notes and install instructions"
 
 - **`roof-club` namespace migration.** Its `CLAUDE.md` references `f4d-kit:*`. Task 11 gives `project-audit` the check that finds it; the fix belongs in that repo, not this one.
 - **Archiving `f4d/f4d-dev-env-configurator`.** Left as a redirect. Archiving is reversible and can wait for the first clean release.
-- **D-02 and D-06 enforcement.** Both registered as `PROSE`. Promoting them is `promote-rule`'s job once there is a gate to promote them to.
+- **DS-02 and DS-06 enforcement.** Both registered as `PROSE`. Promoting them is `promote-rule`'s job once there is a gate to promote them to.
 
 ---
 
