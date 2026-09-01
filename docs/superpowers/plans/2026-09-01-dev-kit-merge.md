@@ -296,6 +296,30 @@ git commit -m "feat: design rules modules replace frontend.md; C-15 to core"
 - Consumes: Task 3's four module ids and its `C-15` row.
 - Produces: a `## Design` section whose `D-*` IDs `project-init` writes into `manifest.json` and `project-audit` checks.
 
+- [ ] **Step 0: Restore `.github/`, omitted by Task 1's rsync**
+
+Added 2026-09-01 (ruling R-09). Task 1's rsync list enumerated visible
+directories and missed both dotfile directories. `.claude/` was caught during
+Task 1; `.github/` was not. Three tracked files are absent, so the merged plugin
+currently has **no CI at all**:
+
+```bash
+F4D=/Users/ian-ra/code-projects/f4d/f4d-dev-env-configurator
+rsync -a "$F4D/.github" .
+git add .github && ls .github/workflows/
+```
+
+Expected: `dependabot.yml`, `workflows/gates.yml`, `workflows/main-verify.yml`.
+
+This is not cosmetic. `bash tests/conformance_test.sh` currently reports
+`pass=48 fail=1` here against `pass=49 fail=0` upstream, failing on
+*"gates.yml has no pinned 'pip install pyyaml==X.Y.Z'"* — it is asserting against
+the repo's own `.github/workflows/gates.yml`, which does not exist. Tasks 6 and 11
+both gate on this suite, so fix it here or they inherit a confusing failure that
+has nothing to do with their work.
+
+Verify: `bash tests/conformance_test.sh` returns `pass=49 fail=0`.
+
 - [ ] **Step 1: Add the `## Design` section**
 
 ```markdown
@@ -865,13 +889,24 @@ Expected: exit 0. Any failure is fixed in its owning task, never suppressed here
 
 - [ ] **Step 2: Clean-room install from the renamed repo**
 
+Install from the **local tree**, not from GitHub. The branch carrying this work
+is unpushed, and `claude plugin marketplace add roofadvisor/dev-kit` clones the
+remote's default branch — which still holds design-kit 1.0.0. Installing from
+GitHub here would verify the wrong tree and report a confident pass on code that
+is not this code (ruling R-10).
+
 ```bash
 export CLAUDE_CONFIG_DIR=$(mktemp -d)
-claude plugin marketplace add roofadvisor/dev-kit
+claude plugin marketplace add "$PWD"
 claude plugin install dev-kit@roofadvisor
 claude plugin list
 claude plugin details dev-kit | grep -A2 "Projected token cost"
 ```
+
+Verifying the *published* install path additionally requires pushing this branch
+and making it the default. That is an outward-facing change to what everyone
+installs, so it is the user's call and explicitly out of scope for this task —
+report it as the remaining step rather than doing it.
 
 Expected: `Status: ✔ enabled`; 32 skills, 2 commands, 5 agents; always-on materially below the ~5,155 naive-merge figure.
 
