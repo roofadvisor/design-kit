@@ -17,7 +17,12 @@
 - Every hook must fail closed: a guard that cannot evaluate its input exits 2, never 0 (G-03).
 - Rules modules carry frontmatter `id:` and `always_apply:`. `REGISTRY.md` is never copied into a project.
 - Registry status vocabulary is fixed: `HOOK` / `TEST` / `GATE` / `AGENT` / `LINT` / `PROSE`. A rule with no enforcement is recorded as `PROSE`, never omitted.
-- `python3 scripts/render_registry.py --validate` must exit 0 after any registry or module change.
+- After any registry or module change, `bash tests/render_registry_test.sh` must pass.
+  Note: bare `python3 scripts/render_registry.py --validate` does NOT work in this repo —
+  it renders a *project's* `.claude/rules/manifest.json` against the plugin's registry, and
+  the plugin repo holds no project manifest, so it errors with
+  `--plugin not given and CLAUDE_PLUGIN_ROOT unset`. The test harness supplies fixture
+  manifests and is the correct check here.
 - No emoji in any shipped instruction surface (`check_no_emoji.py`).
 - Design gates need Playwright resolvable from the invoking directory. A skipped gate is never a passed gate.
 
@@ -198,7 +203,7 @@ git commit -m "refactor: fold 7 aesthetic skills into the aesthetic-systems cata
 **Files:**
 - Create: `templates/rules/design-tokens.md`, `design-a11y.md`, `design-components.md`, `design-handoff.md`
 - Delete: `templates/rules/frontend.md`
-- Test: `python3 scripts/render_registry.py --validate`
+- Test: `bash tests/render_registry_test.sh`
 
 **Interfaces:**
 - Consumes: Task 1's tree.
@@ -266,7 +271,7 @@ Expected: hits are the rows and interview line Task 4 and Task 6 update. Note th
 - [ ] **Step 7: Verify every module parses and no path is stale**
 
 ```bash
-python3 scripts/render_registry.py --validate
+bash tests/render_registry_test.sh
 grep -rn 'python3 scripts/\|node scripts/' templates/rules/design-*.md || echo "ALL PATHS PLUGIN-RELATIVE"
 ```
 
@@ -313,7 +318,6 @@ git commit -m "feat: design rules modules replace frontend.md; C-15 to core"
 
 ```bash
 bash tests/render_registry_test.sh
-python3 scripts/render_registry.py --validate
 ```
 
 Expected: test suite passes; validator exits 0.
@@ -479,7 +483,7 @@ Note in the step that files written before this change lack `bundles`; `upgrade.
 
 ```bash
 bash tests/conformance_test.sh
-python3 scripts/render_registry.py --validate
+bash tests/render_registry_test.sh
 ```
 
 Expected: both pass.

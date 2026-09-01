@@ -44,8 +44,14 @@ Measured, not assumed:
 
 - **Zero name collisions** across all 39 skills, 4 commands, and 5 agents. The
   merge forces no rename.
-- Always-on cost: design-kit ~2,785 tok, f4d-kit ~2,370 tok. Naive merge
-  ~5,155 tok added to every session. Target after pruning: ~4,050.
+- Always-on cost: design-kit ~2,785 tok, f4d-kit ~2,370 tok measured separately.
+  **Measured on the actual merged tree (2026-09-01): ~3,752 tok**, 43 skills /
+  5 agents / 4 hooks — not the ~5,155 estimated by summing the two, because the
+  plugins' always-on costs share fixed overhead rather than adding. The merge
+  therefore starts below the ~4,050 post-pruning target; pruning improves on it
+  further. Measured with an isolated config dir (see ruling R-05 in the SDD
+  ledger): `claude plugin details` resolves installed plugins only, so the tree
+  must be installed from a local-directory marketplace to be measured.
 - f4d-kit already runs the mechanism this design needs: 22 composable rules
   modules with `id`/`always_apply` frontmatter, a rule registry, per-project
   `.claude/rules/manifest.json`, and `render_instructions.py` propagating
