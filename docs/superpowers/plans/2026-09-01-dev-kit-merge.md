@@ -1124,6 +1124,15 @@ in a directory this plugin excludes:
   `design-systems/library/`". Seven of the 138 are now inline. Correct the count
   or the location so the sentence is true.
 
+- [ ] **Step 3c: Widen the options-cut exception**
+
+Added 2026-09-01 from Task 5's re-review (non-blocking). `response-format.md`
+reads "listing options you are not recommending — unless asked to compare them".
+The scenario that motivated the fix was a user asking *"what are my options"* —
+a request to **list**, not to compare. A reader applying the words literally
+could fail to fire the exception on the exact phrasing that prompted it. Widen
+the verb so a plain request to see the options is covered too. One line.
+
 - [ ] **Step 3b: Two registry corrections from Task 4's review**
 
 Added 2026-09-01 (both Minor, both errors in the plan's own table rather than in
