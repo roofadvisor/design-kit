@@ -82,6 +82,20 @@ The failure class that survives review. Highest-value column in this file.
 | P-04 | Preview and execute produce the same request set | TEST | PROSE | project has a dry-run mode — then required |
 | P-05 | Load and failure paths ship with the change | JUDGMENT | PROSE + DoD | — |
 
+## Design
+
+| ID | Rule | Should be | Today | Promote when |
+|---|---|---|---|---|
+| DS-01 | No hardcoded colour, size, or timing — every value is a token | GATE | PROSE | lint_hardcodes wired into an automatic gate |
+| DS-02 | A component never reads a primitive token | GATE | PROSE | open |
+| DS-03 | Every token has a light and a dark value | GATE | PROSE | a per-token light/dark completeness check, wired into an automatic gate |
+| DS-04 | Text meets WCAG 2.2 AA in both themes, measured not assumed | GATE | PROSE | verify_states/validate_contrast wired into an automatic gate |
+| DS-05 | Every interactive component ships all eight states | GATE | PROSE | an eight-state completeness check, wired into an automatic gate |
+| DS-06 | Every interactive component has a rendered state harness | GATE | PROSE | open |
+| DS-07 | Destructive actions wear the danger token everywhere | GATE | PROSE | lint_intent wired into an automatic gate |
+| DS-08 | Motion respects prefers-reduced-motion with no content loss | GATE | PROSE | verify_reduced_motion wired into an automatic gate |
+| DS-09 | A design change has a SemVer level and a changelog entry | PROSE | PROSE | open |
+
 ## Database
 
 | ID | Rule | Should be | Today | Promote when |
