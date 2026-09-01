@@ -910,6 +910,24 @@ that break them:
   `project-init` and `ship-it`, selected by the design bundles in Round 3.
 ```
 
+- [ ] **Step 4a: Rewrite `INSTRUCTIONS.md` — the plugin's field map**
+
+Added 2026-09-01 (ruling R-06) after Task 2's implementer found it uncovered.
+It is the map of every skill, command, and gate, and the merge invalidated
+nearly all of it: it still lists the 7 retired aesthetics, names **zero** of the
+15 development skills, and describes 4 commands where 2 remain.
+
+Regenerate its tables against the final tree — 32 skills, 2 commands, 5 agents,
+4 hook events, the six design bundles, and the rules modules. Keep the existing
+per-row shape (what each piece runs, what it reads, its upstream source link);
+that structure is the file's value and it survives the merge intact.
+
+Also remove the dead Claude artifact link from **both** `INSTRUCTIONS.md` and
+`README.md`. It points at a private artifact, so now that this repo is public it
+is a 404 for every visitor. Removing the link is in scope here; republishing or
+replacing the artifact is not — that is an outward-facing publish and belongs to
+the user.
+
 - [ ] **Step 5: Point the old repo at the new home**
 
 Update `f4d/f4d-dev-env-configurator`'s README to name `roofadvisor/dev-kit` as the home and mark its marketplace entry deprecated.
