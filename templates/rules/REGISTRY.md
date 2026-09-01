@@ -188,6 +188,7 @@ because every environment before production is single-instance.
 | O-04 | Production credentials never enter an agent session | HOOK | **HOOK** | done |
 | O-05 | Structured logs; never log payloads, PII, or credentials | GATE | **GATE** (`check_log_hygiene`) | done |
 | O-06 | Docs-only changes skip the full CI gate | GATE | **GATE** (path filters) | done |
+| O-09 | Technical answers are led by the result, bulleted, and evidence-backed | JUDGMENT | PROSE | — |
 
 ---
 
