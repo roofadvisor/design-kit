@@ -1003,6 +1003,22 @@ suite nor several test files that now exist. Update the identity, the remote
 against a real run or remove them — a stale expected count trains readers to
 ignore a failing suite.
 
+- [ ] **Step 3a: Close the inlined-aesthetic loose threads**
+
+Added 2026-09-01 from Task 2's review (two Minor findings, folded here rather
+than into Task 2's loop). Task 2 moved seven aesthetics *inline* into
+`kit/taste/aesthetic-systems.md`, but two places still describe them as living
+in a directory this plugin excludes:
+
+- `skills/apply-aesthetic/SKILL.md:16` says named-library specs live in
+  `${CLAUDE_PLUGIN_ROOT}/kit/design-systems/library/<name>/DESIGN.md`. Add the
+  caveat that seven are inline in the catalog itself. Low risk in practice — the
+  inline specs load into context first — but as written, a model that tries the
+  directory first meets a dead end.
+- `kit/taste/aesthetic-systems.md:176` says "138 named design systems in
+  `design-systems/library/`". Seven of the 138 are now inline. Correct the count
+  or the location so the sentence is true.
+
 - [ ] **Step 4: Verify nothing that should have changed was missed**
 
 ```bash
