@@ -88,6 +88,89 @@ Every library spec follows the same shape: **Visual Theme → Color Palette & Ro
 
 ---
 
+## Inlined Aesthetic Specs
+
+The seven systems below — `clean`, `modern`, `friendly`, `premium`, `refined`, `spacious`,
+`enterprise` — were previously standalone skills, each shipping its own `DESIGN.md`. They
+are folded in here as full inline specs rather than as `design-systems/library/<name>/DESIGN.md`
+files like the rest of the Library Catalog, because this plugin deliberately ships without
+that external tree (see `kit/design-systems/` and the root README's "Deliberately excluded"
+note — the full 138/149-system library lives in Claude Design and the raw kit archive, not
+here). The Library Catalog entries below link to these headings directly. Apply them the
+same way as any other named system, via the Library Contract above.
+
+### clean
+
+Simplicity-focused design with ample whitespace, legible typography, and a limited color palette to reduce visual clutter.
+
+- **Visual style:** minimal, clean
+- **Color roles:** primary `#3B82F6` · secondary `#8B5CF6` · success `#16A34A` · warning `#D97706` · danger `#DC2626` · surface `#FFFFFF` · text `#111827` · neutral `#FFFFFF`
+- **Typography:** primary=Roboto, display=Poppins, mono=Inconsolata · scale 12/14/16/20/24/32 · weights 100, 200, 300, 400, 500, 600, 700, 800, 900 · h1 2rem (Poppins) · body-md 1rem (Roboto) · label-caps 0.75rem (Inconsolata)
+- **Spacing:** sm 8px · md 16px · 8pt baseline grid
+- **Radius:** sm 4px · md 8px
+
+### modern
+
+Contemporary editorial style with serif typography, minimal palettes, and clean layouts for polished digital products.
+
+- **Visual style:** modern, minimal, clean, editorial
+- **Color roles:** primary `#553F83` · secondary `#111111` · success `#16A34A` · warning `#D97706` · danger `#DC2626` · surface `#553F83` · text `#ffffff` · neutral `#553F83`
+- **Typography:** primary=IBM Plex Serif, display=IBM Plex Serif, mono=JetBrains Mono · scale 12/14/16/20/24/32 · weights 100, 200, 300, 400, 500, 600, 700, 800, 900 · h1 2rem (IBM Plex Serif) · body-md 1rem (IBM Plex Serif) · label-caps 0.75rem (JetBrains Mono)
+- **Spacing:** sm 4px · md 8px · scale 4/8/12/16/24/32
+- **Radius:** sm 4px · md 8px
+
+### friendly
+
+Approachable, intuitive design with rounded elements, ample whitespace, and soft pastel color palettes.
+
+- **Visual style:** bold, playful, premium
+- **Color roles:** primary `#F2D9DC` · secondary `#D9F2D8` · success `#16A34A` · warning `#D97706` · danger `#DC2626` · surface `#FFFFFF` · text `#111827` · neutral `#FFFFFF`
+- **Typography:** primary=Noto Serif Display, display=Noto Serif Display, mono=Space Mono · scale 14/16/18/24/32/40 · weights 100, 200, 300, 400, 500, 600, 700, 800, 900 · h1 2.5rem (Noto Serif Display) · body-md 1rem (Noto Serif Display) · label-caps 0.875rem (Space Mono)
+- **Spacing:** sm 4px · md 8px · compact density mode
+- **Radius:** sm 4px · md 8px
+
+### premium
+
+Apple-inspired premium aesthetic with precise spacing, modern typography, and a refined, polished visual language.
+
+- **Visual style:** modern
+- **Color roles:** primary `#3B82F6` · secondary `#8B5CF6` · success `#16A34A` · warning `#D97706` · danger `#DC2626` · surface `#FFFFFF` · text `#111827` · neutral `#FFFFFF`
+- **Typography:** primary=Inter, display=Inter, mono=JetBrains Mono · scale 12/14/16/18/24/30/36 · weights 100, 200, 300, 400, 500, 600, 700, 800, 900 · h1 2.25rem (Inter) · body-md 1rem (Inter) · label-caps 0.75rem (JetBrains Mono)
+- **Spacing:** sm 4px · md 8px · scale 4/8/12/16/24/32
+- **Radius:** sm 4px · md 8px
+
+### refined
+
+Carefully curated, modern minimal style with elegant serif typography and understated, sophisticated palettes.
+
+- **Visual style:** modern, minimal
+- **Color roles:** primary `#3B82F6` · secondary `#8B5CF6` · success `#16A34A` · warning `#D97706` · danger `#DC2626` · surface `#FFFFFF` · text `#111827` · neutral `#FFFFFF`
+- **Typography:** primary=Playfair Display, display=Playfair Display, mono=JetBrains Mono · scale 12/14/16/20/24/32 · weights 100, 200, 300, 400, 500, 600, 700, 800, 900 · h1 2rem (Playfair Display) · body-md 1rem (Playfair Display) · label-caps 0.75rem (JetBrains Mono)
+- **Spacing:** sm 4px · md 8px · scale 4/8/12/16/24/32
+- **Radius:** sm 4px · md 8px
+
+### spacious
+
+Generous whitespace, consistent padding, and grid-based layouts for clean, readable, and breathing interfaces.
+
+- **Visual style:** minimal, clean
+- **Color roles:** primary `#3B82F6` · secondary `#8B5CF6` · success `#16A34A` · warning `#D97706` · danger `#DC2626` · surface `#FFFFFF` · text `#111827` · neutral `#FFFFFF`
+- **Typography:** primary=Open Sans, display=Montserrat, mono=IBM Plex Mono · scale 12/14/16/18/24/30/36 · weights 100, 200, 300, 400, 500, 600, 700, 800, 900 · h1 2.25rem (Montserrat) · body-md 1rem (Open Sans) · label-caps 0.75rem (IBM Plex Mono)
+- **Spacing:** sm 8px · md 16px · 8pt baseline grid
+- **Radius:** sm 4px · md 8px
+
+### enterprise
+
+Dark-themed cloud-platform aesthetic with modular grids, glass-like panels, and strong data hierarchy for productivity dashboards.
+
+- **Visual style:** modern, clean, cloud-platform aesthetic (Heroku/Vercel/GitHub inspired), dark theme, subtle gradients, soft shadows, glass-like panels, rounded components
+- **Color roles:** primary `#0C5CAB` · secondary `#0a4a8a` · success `#10b981` · warning `#f59e0b` · danger `#ef4444` · surface `#09090b` · text `#fafafa` · neutral `#09090b`
+- **Typography:** primary=IBM Plex Sans, display=IBM Plex Sans, mono=IBM Plex Sans · scale 12/14/16/20/24/32 · weights 100, 200, 300, 400, 500, 600, 700, 800, 900 · h1 2rem (IBM Plex Sans) · body-md 1rem (IBM Plex Sans) · label-caps 0.75rem (IBM Plex Sans)
+- **Spacing:** sm 8px · md 16px · 8pt baseline grid
+- **Radius:** sm 4px · md 8px
+
+---
+
 ## The Library Catalog
 
 There are **138 named design systems** in `design-systems/library/`. Each is a complete `DESIGN.md` spec (visual theme, color roles + hex, typography, spacing, components, motion). Load the one that matches the brief, then translate its values through the [Framework Adapter Protocol](../frameworks/adapter-protocol.md).
@@ -150,7 +233,7 @@ There are **138 named design systems** in `design-systems/library/`. Each is a c
 - [`doodle`](../design-systems/library/doodle/DESIGN.md) — Hand-drawn, sketch-like style with doodles, handwritten fonts, and imperfect lines for a playful, informal feel.
 - [`editorial`](../design-systems/library/editorial/DESIGN.md) — Magazine-inspired editorial layout with refined serif typography, structured grids, and elegant reading experiences.
 - [`fantasy`](../design-systems/library/fantasy/DESIGN.md) — Game-inspired fantasy aesthetic with bold, premium visuals, rich color palettes, and immersive thematic elements.
-- [`friendly`](../design-systems/library/friendly/DESIGN.md) — Approachable, intuitive design with rounded elements, ample whitespace, and soft pastel color palettes.
+- [`friendly`](#friendly) — Approachable, intuitive design with rounded elements, ample whitespace, and soft pastel color palettes.
 - [`lingo`](../design-systems/library/lingo/DESIGN.md) — Playful, minimal design with bright colors, rounded shapes, tactile 3D borders, and friendly illustrations for approachable interfaces.
 - [`publication`](../design-systems/library/publication/DESIGN.md) — Print-inspired visual language for books, magazines, and reports with editorial grids and expressive typography.
 - [`storytelling`](../design-systems/library/storytelling/DESIGN.md) — Narrative-driven design using visuals, copy, and interaction to guide users through engaging, emotionally resonant journeys.
@@ -207,7 +290,7 @@ There are **138 named design systems** in `design-systems/library/`. Each is a c
 - [`bento`](../design-systems/library/bento/DESIGN.md) — Modular grid layout with card-like blocks, clear hierarchy, soft spacing, and subtle visual contrast for organized, scannable interfaces.
 - [`levels`](../design-systems/library/levels/DESIGN.md) — Conversion-focused design that removes friction and guides users toward action through clarity, trust, and speed.
 - [`perspective`](../design-systems/library/perspective/DESIGN.md) — Spatial depth design with isometric views, vanishing points, and layered elements that guide attention through 3D-like realism.
-- [`spacious`](../design-systems/library/spacious/DESIGN.md) — Generous whitespace, consistent padding, and grid-based layouts for clean, readable, and breathing interfaces.
+- [`spacious`](#spacious) — Generous whitespace, consistent padding, and grid-based layouts for clean, readable, and breathing interfaces.
 
 ### Media & Consumer (12)
 
@@ -226,13 +309,13 @@ There are **138 named design systems** in `design-systems/library/`. Each is a c
 
 ### Modern & Minimal (10)
 
-- [`clean`](../design-systems/library/clean/DESIGN.md) — Simplicity-focused design with ample whitespace, legible typography, and a limited color palette to reduce visual clutter.
+- [`clean`](#clean) — Simplicity-focused design with ample whitespace, legible typography, and a limited color palette to reduce visual clutter.
 - [`contemporary`](../design-systems/library/contemporary/DESIGN.md) — Current-era minimalist design with bento grids, dark mode support, and high-performance accessible layouts.
 - [`flat`](../design-systems/library/flat/DESIGN.md) — Two-dimensional minimalist style with vibrant colors, clean typography, and no 3D effects for fast, user-friendly interfaces.
 - [`minimal`](../design-systems/library/minimal/DESIGN.md) — Stripped-back design emphasizing whitespace, clean typography, and restrained color for maximum clarity and focus.
-- [`modern`](../design-systems/library/modern/DESIGN.md) — Contemporary editorial style with serif typography, minimal palettes, and clean layouts for polished digital products.
+- [`modern`](#modern) — Contemporary editorial style with serif typography, minimal palettes, and clean layouts for polished digital products.
 - [`mono`](../design-systems/library/mono/DESIGN.md) — Monospace-driven, matrix-inspired design with high-contrast elements, compact density, and a hacker-chic aesthetic.
-- [`refined`](../design-systems/library/refined/DESIGN.md) — Carefully curated, modern minimal style with elegant serif typography and understated, sophisticated palettes.
+- [`refined`](#refined) — Carefully curated, modern minimal style with elegant serif typography and understated, sophisticated palettes.
 - [`shadcn`](../design-systems/library/shadcn/DESIGN.md) — Shadcn/ui-inspired design with minimal, clean components, monochrome palette, and utility-first patterns.
 - [`simple`](../design-systems/library/simple/DESIGN.md) — Straightforward, no-frills design with clean typography, neutral colors, and intuitive layouts that stay out of the way.
 - [`sleek`](../design-systems/library/sleek/DESIGN.md) — Modern minimalist aesthetic with clean lines, intentional color palette, subtle interactions, and consistent spacing.
@@ -266,10 +349,10 @@ There are **138 named design systems** in `design-systems/library/`. Each is a c
 - [`corporate`](../design-systems/library/corporate/DESIGN.md) — Professional, brand-aligned design with structured grids, minimalist layouts, and consistent enterprise patterns.
 - [`dashboard`](../design-systems/library/dashboard/DESIGN.md) — Dark-themed cloud-platform aesthetic with modular grids, glass-like panels, and strong data hierarchy for productivity dashboards.
 - [`elegant`](../design-systems/library/elegant/DESIGN.md) — Graceful, refined aesthetic with delicate typography, minimal palettes, and polished layouts that exude sophistication.
-- [`enterprise`](../design-systems/library/enterprise/DESIGN.md) — Clean, high-contrast enterprise design for data-driven workflows with intuitive drag-and-drop patterns and structured layouts.
+- [`enterprise`](#enterprise) — Dark-themed cloud-platform aesthetic with modular grids, glass-like panels, and strong data hierarchy for productivity dashboards.
 - [`luxury`](../design-systems/library/luxury/DESIGN.md) — High-end dark aesthetic with bold headings, monochromatic palette, and premium feel for luxury brand experiences.
 - [`material`](../design-systems/library/material/DESIGN.md) — Google's Material Design with layered surfaces, dynamic theming, built-in motion, and responsive cross-platform patterns.
-- [`premium`](../design-systems/library/premium/DESIGN.md) — Apple-inspired premium aesthetic with precise spacing, modern typography, and a refined, polished visual language.
+- [`premium`](#premium) — Apple-inspired premium aesthetic with precise spacing, modern typography, and a refined, polished visual language.
 - [`professional`](../design-systems/library/professional/DESIGN.md) — Polished, business-ready design with modern typography, structured layouts, and a trustworthy visual identity.
 
 ### Retro & Nostalgic (4)
