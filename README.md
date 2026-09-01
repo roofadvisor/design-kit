@@ -32,6 +32,13 @@ then, in any project where you want it:
 
 Uninstall or disable per project the same way — nothing persists where it isn't enabled.
 
+## Full map
+
+**[INSTRUCTIONS.md](INSTRUCTIONS.md)** — every skill, command, and gate: what it runs,
+what it reads, and its upstream source link. The same map is published as the
+**[Design Kit Field Guide](https://claude.ai/code/artifact/f81cb2e4-ce34-4c5b-9998-b908e4716857)**
+artifact, which Claude sessions on this account can read via the Artifact tool.
+
 ## Notes
 
 - Verification scripts that render (measure_render, verify_states, axe_audit, …) need

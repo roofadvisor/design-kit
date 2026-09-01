@@ -2,7 +2,7 @@
 description: Scaffold a new design-product project that matches the recommended Claude Code layout (the reference structure). Use when starting a fresh product/app that will be built with this design system.
 ---
 
-Generate a new design-project skeleton from `templates/product-design/` (Track B
+Generate a new design-project skeleton from `${CLAUDE_PLUGIN_ROOT}/kit/templates/product-design/` (Track B
 of `docs/restructure-plan.md`) into a target directory the user names.
 
 The layout to produce (exactly the reference structure):
@@ -41,7 +41,7 @@ by hand from a clone.
 
 Steps:
 1. Ask for the target directory if not given. Create it if it does not exist.
-2. Copy every file of `templates/product-design/` into it, preserving the tree.
+2. Copy every file of `${CLAUDE_PLUGIN_ROOT}/kit/templates/product-design/` into it, preserving the tree.
    Two rules on the copy:
    - `CLAUDE.local.md.template` lands as `CLAUDE.local.md` (the suffix exists
      only so the kit's own gitignore cannot swallow the file).
