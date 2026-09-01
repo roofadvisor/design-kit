@@ -73,15 +73,24 @@ Six units, each Q&A-selected in Round 3. ✅ = operates with no other bundle pre
 
 ### Rules modules
 
-`frontend.md` retires. Three modules replace it, seeded from design-kit's own
-product-design template and backed by real gates rather than prose:
+`frontend.md` retires. Four design modules replace it, seeded from design-kit's
+own product-design template plus the doctrine salvaged in review 4, and backed
+by real gates rather than prose:
 
-- `design-tokens.md` — token tiers, no hardcoded values, theme resolution
+- `design-tokens.md` — token tiers, no hardcoded values, theme resolution,
+  the Major Third type scale and 4px spacing rules, and motion values
 - `design-a11y.md` — WCAG 2.2 AA, the eight states, keyboard and RTL
-- `design-components.md` — anatomy, variants, states, error and empty states
+- `design-components.md` — anatomy, variants, states, error and empty states,
+  and the 8 code-output rules
+- `design-handoff.md` — handoff checklist and the component Definition of Done;
+  `ship-it` step 3 is taught to walk it alongside `DEFINITION.md`
 
 Plus `response-format.md` (`always_apply: true`) carrying the concise-output
 language, propagated by `render_instructions.py` like any other module.
+
+One existing module changes: `core.md` gains the output-completeness rule
+("a partial output is a broken output"), promoted from design-only to
+framework-wide with its own registry ID.
 
 Each gets rows in `templates/rules/REGISTRY.md` naming what enforces it today.
 A design rule with no gate behind it is recorded as unenforced, not omitted.
