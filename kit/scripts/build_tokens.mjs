@@ -16,7 +16,8 @@
  *   node scripts/build_tokens.mjs --in design-tokens.json --out src/theme.css
  *
  * --in takes a directory of DTCG files (default: tokens/) or a single self-contained
- * file, which is what a product repo scaffolded from templates/product-design/ has.
+ * file, which is what a product repo scaffolded by project-init's design bundle has
+ * (design-tokens.json at the project root — see skills/project-init/SKILL.md Step 3.7a).
  */
 import { readFileSync, readdirSync, statSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';

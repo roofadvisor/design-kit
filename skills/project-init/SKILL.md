@@ -247,7 +247,7 @@ Read `references/scaffold-spec.md` for exact file contents and layout. At entry 
      project whose gates pass over zero harnesses, or over styles nobody
      wired up, is green with nothing proven.
    - `.mcp.json` with the server(s) Round 3's Figma/Notion/Drive answer named,
-     seeded from `${CLAUDE_PLUGIN_ROOT}/kit/templates/product-design/.mcp.json`.
+     seeded from `${CLAUDE_PLUGIN_ROOT}/templates/scaffold/mcp.json.tmpl`.
      **No secrets in it** — every value is `${VAR}` expansion, read from the
      user's own shell at launch, never written here. Remind the user to set
      those variables in step 5's closing report.
