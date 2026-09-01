@@ -221,7 +221,12 @@ Read `references/scaffold-spec.md` for exact file contents and layout. At entry 
    - `design-tokens.json` at the project root, seeded from
      `${CLAUDE_PLUGIN_ROOT}/kit/tokens/`. Replace the `primitive.brand` ramp with
      the project's brand; keep the semantic and component tiers. Prove it:
-     `python3 "${CLAUDE_PLUGIN_ROOT}/kit/scripts/validate_contrast.py" design-tokens.json`
+     `python3 "${CLAUDE_PLUGIN_ROOT}/kit/scripts/validate_contrast.py" design-tokens.json`.
+     Then build it: `node "${CLAUDE_PLUGIN_ROOT}/kit/scripts/build_tokens.mjs"
+     --in design-tokens.json --out src/theme.css` — the CSS-variable theme
+     (`--color-*`, `--space-*`, `--radius-*`, ...) every component, including
+     the worked example below, resolves its `var(--...)` references against.
+     Skipping this leaves every one of those variables undefined.
    - `src/components/`, `public/images/`, `reference/` with `.gitkeep` files
    - One worked example component with its harness —
      `src/components/Button/{Button.tsx,Button.states.html,index.ts}`.
@@ -232,8 +237,15 @@ Read `references/scaffold-spec.md` for exact file contents and layout. At entry 
      (its real `ds-btn` class, `data-variant`, `aria-pressed`, `aria-busy` —
      not a re-styled clone) through all 8 states, in the grid-of-cells shape
      `${CLAUDE_PLUGIN_ROOT}/kit/examples/component-states/button.html` already
-     demonstrates. A design project whose gates pass over zero harnesses is
-     green with nothing proven.
+     demonstrates. **Golden's `.ds-btn` rules ship as a comment block inside
+     `Button.tsx`, not live CSS** — `build_tokens.mjs` above only emits the
+     token *variables*, not this class. Extract the comment block's rules into
+     `src/theme.css` (appended after the generated variables) and give the
+     harness `<link rel="stylesheet" href="../../theme.css">` so it actually
+     loads them. Skip either step and the harness still renders — as unstyled
+     default browser controls — and the gates score that green: a design
+     project whose gates pass over zero harnesses, or over styles nobody
+     wired up, is green with nothing proven.
    - `.mcp.json` with the server(s) Round 3's Figma/Notion/Drive answer named,
      seeded from `${CLAUDE_PLUGIN_ROOT}/kit/templates/product-design/.mcp.json`.
      **No secrets in it** — every value is `${VAR}` expansion, read from the

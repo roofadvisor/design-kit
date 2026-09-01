@@ -40,26 +40,34 @@ Each module is a single file copied into `.claude/rules/`. Include only what the
 
 ## Design modules
 
-Four modules replace the retired `frontend` module. The Round 3 row asks about
-six design capabilities in one question — tokens, verification, content,
-direction, build, governance — but only four of them add a module of their
-own. The other two ride on whichever module their dependency pulls in, or add
-none at all.
+Four modules replace the retired `frontend` module, but the Round 3 row asks
+about six design capabilities in one question — tokens, verification,
+content, direction, build, governance. One rule explains all six: a
+capability adds a project rules module only when it has project-level rules
+of its own to hold; otherwise its skill reads its doctrine straight from
+`${CLAUDE_PLUGIN_ROOT}/kit/` when invoked, the same way every skill already
+does for anything that isn't project-specific.
 
-| Capability (bundle) | Module it adds | Notes |
+| Capability (bundle) | Module(s) it adds | Notes |
 |---|---|---|
 | `design.tokens` | `design-tokens` | Token tiers, theme resolution, type scale, spacing, motion |
 | `design.verify` | `design-a11y` | WCAG 2.2 AA, the eight states, keyboard, RTL — this *is* the verification layer |
-| `design.content` | — | UX-writing doctrine lives in `${CLAUDE_PLUGIN_ROOT}/kit/content/voice-tone.md`, read directly by the `ux-writing` skill; no project rules module |
+| `design.content` | — | UX-writing doctrine lives in `${CLAUDE_PLUGIN_ROOT}/kit/content/voice-tone.md`, read directly by the `ux-writing` skill |
 | `design.direction` | — | Resolves through the token system (`apply-aesthetic`); needs `design.tokens` and adds nothing beyond it |
-| `design.build` | `design-components` | Anatomy, variants, states, the 8 code-output rules; needs `design.tokens` |
-| `design.govern` | `design-handoff` | Handoff checklist, component Definition of Done; needs `design.verify` |
+| `design.build` | `design-components`, `design-handoff` | Anatomy/variants/states/the 8 code-output rules, plus the handoff checklist and component Definition of Done that close the build lane out — `design-handoff.md` points at `kit/workflows/design-to-code.md`, the same design-to-code workflow `design.build`'s own skills (`design-code`, `design-component`, `image-to-code`, `prototype`, `redesign`) run. Needs `design.tokens` |
+| `design.govern` | — | SemVer, deprecation policy, and the contribution workflow for the shared design-system package live in `${CLAUDE_PLUGIN_ROOT}/kit/workflows/governance.md`, read directly by the `governance` skill — disjoint from `design-handoff.md`'s per-component checklist, so `design.build`'s modules aren't reused here. Needs `design.verify` |
 
-The dependency rule (Round 3 table, directly underneath it) still applies even
-when the dependency itself adds no module by name — selecting only
-`design.direction` still pulls in `design.tokens`, and therefore the
-`design-tokens` module, even though "direction" never appears in
-`.claude/rules/` under its own name.
+The dependency rule (Round 3 table, directly underneath it) still fires even
+when the capability that *has* the dependency adds no module of its own —
+selecting only `design.direction` still pulls in `design.tokens`, which does
+add the `design-tokens` module, even though "direction" itself never appears
+in `.claude/rules/` under its own name. `design.govern`'s dependency on
+`design.verify` earns its keep the same way, despite `design.govern` also
+adding no module: `governance.md`'s own Definition of Done requires new work
+to meet "the 8-state + a11y + token-mapping bar" and have contrast
+"re-checked if colors changed" — checks that exist only once `design-a11y` is
+held. Selecting governance without verify would leave the `governance` skill
+grading against a bar nothing in the project can measure.
 
 ## Agent Catalog
 
