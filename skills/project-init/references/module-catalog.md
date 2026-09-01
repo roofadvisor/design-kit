@@ -17,7 +17,10 @@ Each module is a single file copied into `.claude/rules/`. Include only what the
 | `money` | ask | R3 | Decimal only, splits sum exactly, idempotency keys, property tests, never trust client price |
 | `blockchain` | ask | R3 | Foundry, gas snapshots, CEI ordering, fork testing, no broadcast from agent |
 | `keysafety` | auto with blockchain | R3 | Hard blocks on keys, mnemonics, mainnet RPC |
-| `frontend` | ask | R3 | Perf budgets, a11y, no client-side waterfalls |
+| `design-tokens` | ask | R3 | Token tiers, no hardcoded values, theme resolution, type scale, spacing, motion |
+| `design-a11y` | ask | R3 | WCAG 2.2 AA, the eight states, keyboard, RTL |
+| `design-components` | ask | R3 | Anatomy, variants, states, error/empty states, the 8 code-output rules |
+| `design-handoff` | ask | R3 | Handoff checklist, component Definition of Done |
 | `livesystem` | ask | Q8 | Prod is read-only to agents, migration notes required, no schema change without plan |
 | `dataprotection` | ask | R3 | PII inventory, no PII in logs/keys/URLs, retention, redaction in fixtures |
 | `guards` | **always** | — | Red-then-green, guard hygiene, where a rule belongs |
@@ -35,15 +38,40 @@ Each module is a single file copied into `.claude/rules/`. Include only what the
 - **`statelessness` is decided by deployment, not by preference.** If the project will ever run two instances, it is required — and the local stack changes with it. Retrofitting statelessness after the first production incident is far more expensive than starting with a two-instance compose file.
 - If a project needs more than ten modules, it is probably two projects.
 
+## Design modules
+
+Four modules replace the retired `frontend` module. The Round 3 row asks about
+six design capabilities in one question — tokens, verification, content,
+direction, build, governance — but only four of them add a module of their
+own. The other two ride on whichever module their dependency pulls in, or add
+none at all.
+
+| Capability (bundle) | Module it adds | Notes |
+|---|---|---|
+| `design.tokens` | `design-tokens` | Token tiers, theme resolution, type scale, spacing, motion |
+| `design.verify` | `design-a11y` | WCAG 2.2 AA, the eight states, keyboard, RTL — this *is* the verification layer |
+| `design.content` | — | UX-writing doctrine lives in `${CLAUDE_PLUGIN_ROOT}/kit/content/voice-tone.md`, read directly by the `ux-writing` skill; no project rules module |
+| `design.direction` | — | Resolves through the token system (`apply-aesthetic`); needs `design.tokens` and adds nothing beyond it |
+| `design.build` | `design-components` | Anatomy, variants, states, the 8 code-output rules; needs `design.tokens` |
+| `design.govern` | `design-handoff` | Handoff checklist, component Definition of Done; needs `design.verify` |
+
+The dependency rule (Round 3 table, directly underneath it) still applies even
+when the dependency itself adds no module by name — selecting only
+`design.direction` still pulls in `design.tokens`, and therefore the
+`design-tokens` module, even though "direction" never appears in
+`.claude/rules/` under its own name.
+
 ## Agent Catalog
 
 Agents are not modules and are never asked about directly — selection rides on
 an answer already given. `verify-runner` is unconditional; each of the other
-three is selected exactly when the rules module it audits is selected. This is
-not a new rule: `templates/process/ENFORCEMENT.md`'s honest-audit table already
-pairs each of these three modules with the agent that (advisory-)enforces it —
-this table just makes that pairing a selection decision instead of an
-observation.
+four is selected exactly when the concern it audits is present — a single
+rules module for the first three, any one of the four design modules for
+`design-critic`. This is not a new rule: `templates/process/ENFORCEMENT.md`'s
+honest-audit table already pairs the first three modules with the agent that
+(advisory-)enforces each — this table just makes that pairing a selection
+decision instead of an observation, and `design-critic` follows the identical
+shape one level up from all four design modules at once.
 
 | Agent | Always? | Selected when | Audits |
 |---|---|---|---|
@@ -51,6 +79,7 @@ observation.
 | `schema-reviewer` | if `database` selected | `database` module held (Q4) | Migrations and schema changes |
 | `integration-auditor` | if `data-integration` selected | `data-integration` module held (Q5/R3) | External-source adapters: retry, timeout, rate-limit, fixtures |
 | `contract-drift-checker` | if `contracts` selected | `contracts` module held (Q7) | This repo's handlers/webhooks against the pinned contract spec |
+| `design-critic` | if any `design-*` module selected | any of `design-tokens` / `design-a11y` / `design-components` / `design-handoff` held (R3) | Renders the work and argues for rejection — taste and craft the automated gates can't score |
 
 **Rule:** an agent's job doesn't exist without the concern behind it — a
 `schema-reviewer` in a project with no `database` module has nothing to review
@@ -59,6 +88,8 @@ ask a second question to re-derive what a first question already answered.
 
 At Step 3.7, write exactly: `verify-runner`, plus `schema-reviewer` /
 `integration-auditor` / `contract-drift-checker` for each of `database` /
-`data-integration` / `contracts` present in `decided_modules`. `/project-audit`
-checks the same pairing against `.claude/rules/*.md` already on disk (A20) —
-see `scripts/check_agents.py`.
+`data-integration` / `contracts` present in `decided_modules`, plus
+`design-critic` when any of `design-tokens` / `design-a11y` /
+`design-components` / `design-handoff` is present. `/project-audit` checks the
+same pairing against `.claude/rules/*.md` already on disk (A20) — see
+`scripts/check_agents.py`.

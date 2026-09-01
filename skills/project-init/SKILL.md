@@ -95,6 +95,11 @@ Carry into every later step: the company's `constraints` block goes into `.claud
 7. **Is this standalone, or part of a group of repos that must agree on a contract?**
 8. **Is any part of this already live / in production?**
 
+Design tooling (Figma/Notion/Drive) is the same kind of integration-surface
+question, but it can't be asked here — its trigger is which design bundle got
+picked, and that isn't decided until Round 3. It's asked there instead, as the
+row immediately after the design-bundle row.
+
 ### Round 3 — Conditional modules
 
 Only ask what applies, based on Rounds 1–2. Most rows pull in a rules module and its associated tests, hooks, and local-stack pieces.
@@ -108,10 +113,18 @@ Only ask what applies, based on Rounds 1–2. Most rows pull in a rules module a
 | Money, pricing, invoices, splits, payouts mentioned | **Does this project compute or move money?** | `money` |
 | Chain, wallet, mint, token, contract mentioned | **Any blockchain or smart-contract component? Which chains?** | `blockchain` + `keysafety` |
 | Multiple sources in Q5 | **Do you need to reconcile or merge data across those sources into one canonical record?** | `data-integration` |
-| Frontend != none | **Any hard performance or accessibility requirements?** | `frontend` |
+| Frontend != none | **Does this project have a UI surface? If so, which design capabilities does it need — tokens, verification, content, direction, build, governance?** | `design-tokens` · `design-a11y` · `design-components` · `design-handoff` |
+| Design bundle selected | **Do you need Figma, Notion, or Drive reachable from this project?** | `.mcp.json` entries |
 | Q8 = yes | **What in production must never break, and what must never be touched by an agent session?** | `livesystem` |
 | Always | **Which companion plugins should this repo expect?** Default: `superpowers` (MIT, multi-harness — ships `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`; process skills for TDD, planning, debugging, code review). Offered, never imposed — a declaration is a promise the audit will check. | — (declaration in `.framework-state.json`, not a rules module) |
 | PII, health, payment data hinted | **Does this hold personal, payment, or regulated data?** | `dataprotection` |
+
+**Bundle dependencies.** `design.direction` and `design.build` require
+`design.tokens`; `design.govern` requires `design.verify`. Pull the dependency in
+automatically and say so, the same way `blockchain` pulls in `keysafety`. Never
+scaffold a dependent bundle without its base — the gates it relies on would have
+nothing to read. Which `design-*` module(s) each capability actually adds:
+`references/module-catalog.md` § *Design modules*.
 
 **Rule:** never assume a module. If storage wasn't mentioned, ask — don't skip and don't include. Storage is configured per project, never inherited by default.
 
@@ -123,7 +136,10 @@ Only ask what applies, based on Rounds 1–2. Most rows pull in a rules module a
 selected exactly when `database` / `data-integration` / `contracts`
 (respectively) is among the modules just decided — the same pairing
 `templates/process/ENFORCEMENT.md`'s honest-audit table already states, not a
-new rule. Full table: `references/module-catalog.md` § *Agent Catalog*.
+new rule. `design-critic` is selected exactly when any of the four `design-*`
+modules is among the modules just decided — the same one-level-up pairing, not
+a separate interview question. Full table: `references/module-catalog.md` §
+*Agent Catalog*.
 
 ---
 
@@ -192,12 +208,39 @@ execute.
 Read `references/scaffold-spec.md` for exact file contents and layout. At entry into this step, if `preexisting` is `null` — and only then — capture which planned targets already exist on disk (`null` = never captured; `[]` = captured and empty; a resume never recaptures). After each file lands, append its path to `written_files`; after each non-file step completes (the commit, the upgrade baseline, the repo variable), record it in `phases`. Resume semantics — including how pre-existing targets are re-done safely and why the commit must be phase-tracked — live in the spec's *Init state file* section. Write in this order:
 
 1. `.gitignore`, toolchain pins (`.python-version`, `packageManager`)
+1a. `CLAUDE.local.md` — personal preferences, gitignored. Write the file with a
+   one-line header comment and add it to `.gitignore`. Every project gets one,
+   design or not.
 2. `CLAUDE.md` — assembled from `templates/scaffold/CLAUDE.md.tmpl`, **kept under 80 lines**
 3. `.claude/rules/org.md` — the company's `constraints` block, copied verbatim from its org profile
 4. `.claude/rules/*.md` — copy only the selected modules from `${CLAUDE_PLUGIN_ROOT}/templates/rules/`. **Never copy `REGISTRY.md`** — instead write `.claude/rules/manifest.json`: `{"rules": [...], "overrides": {}}`, where `rules` lists the IDs from each selected module's section of the plugin registry (Core, Guards, and Silent degradation always). Add an `overrides` entry for any row whose enforcement genuinely differs in this project — a manifest asserting checks that do not exist is worse than none. Prove it resolves: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/render_registry.py" --validate` must pass. The project renders its registry view on demand; it never holds a copy that can drift. Then run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/render_instructions.py" --rules-dir .claude/rules --write` to fill `{{RULES_INDEX}}` in `CLAUDE.md` and generate `AGENTS.md` and `.cursor/rules/f4d-kit.mdc` from the module frontmatter (Claude + Cursor + AGENTS by default; add `--targets ...,GEMINI.md` only when the interview selected Gemini). `check_instruction_honesty.py` (C-10) then holds these in sync; `.claude/rules/org.md` is the org constraints block, not a module, and is skipped.
 5. `.claude/hooks/guard-local.sh` — copied from `templates/scaffold/guard-local.sh`, executable. This is A11's floor: a self-contained secrets+force-push guard that survives plugin absence. Every other guard is declared **globally by the plugin itself** (`hooks/hooks.json`, A18) and disappears entirely if the plugin is uninstalled — guard-local.sh is what still blocks C-01/C-02 when that happens. Wire it in `settings.json` (step 6) ALONGSIDE the plugin's own guard.sh — A6 proved any exit-2 blocks regardless of order, so double-wiring is safe.
 6. `.claude/settings.json` — wires **only** `guard-local.sh` (`PreToolUse`, matcher `Bash|Read|Edit|Write`). Do not add entries for `guard.sh`, `rule-zero.sh`, `done-check.sh`, `format.sh`, `verify-record.sh`, or `session-context.sh` here — **A18: `${CLAUDE_PLUGIN_ROOT}` does not resolve inside a project's own `settings.json`.** A hook command built from it there is silently skipped, never run, not even with an empty value (measured on CLI 2.1.220 — `docs/BACKLOG.md` A18). That is what this step used to tell the scaffolder to write. Those six hooks are now declared once, globally, in the plugin's own `hooks/hooks.json` — the only place the variable resolves — and each one gates itself on `.claude/.framework-state.json` (written in step 7) before doing anything else, so installing the plugin does not silently switch on enforcement in every *other* repo the user has open, only ones this kit has scaffolded. Writing a redundant entry here would either duplicate that global wiring (double subprocess cost, double `.enforcement-log` lines per real deny) or, in the old broken form, do nothing at all. A15's session-telemetry reasoning for `SessionStart` still applies — it is unaffected by where the hook is declared. See `templates/process/ENFORCEMENT.md`.
-7. `.claude/agents/*.md` — only the selected agents: `verify-runner` unconditionally, plus `schema-reviewer` / `integration-auditor` / `contract-drift-checker` exactly when `database` / `data-integration` / `contracts` (respectively) is in `decided_modules` — see `references/module-catalog.md` § *Agent Catalog*; no separate interview question. Also write `.claude/.framework-state.json` recording the interview's companion answer — the **full initial object**, not just the `companions` key: `{"version": null, "files": {}, "companions": {"<name>": {"min_version": "<v>", "why": "<one line>", "source": "<marketplace or URL>"}}}`. The framework baseline (`version`/`files`) is not recorded until step 11 runs `upgrade.py --apply`, so a companions-only file is the only state anything reads until then — and `upgrade.py` must be able to load it without crashing (C1). Declare only what the project genuinely relies on: G-06 means an unmet declaration is a finding, so declaring a plugin nobody uses manufactures a permanent false alarm. Verify with `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/check_companions.py"` before finishing.
+7. `.claude/agents/*.md` — only the selected agents: `verify-runner` unconditionally, plus `schema-reviewer` / `integration-auditor` / `contract-drift-checker` / `design-critic` exactly when `database` / `data-integration` / `contracts` / any `design-*` module (respectively) is in `decided_modules` — see `references/module-catalog.md` § *Agent Catalog*; no separate interview question. Also write `.claude/.framework-state.json` recording the interview's companion answer and any design bundles selected — the **full initial object**, not just the `companions` key: `{"version": null, "files": {}, "bundles": ["design.tokens", "..."], "companions": {"<name>": {"min_version": "<v>", "why": "<one line>", "source": "<marketplace or URL>"}}}`. `bundles` holds the raw Round 3 design-capability answer (`design.tokens` / `design.verify` / `design.content` / `design.direction` / `design.build` / `design.govern`) independently of which `design-*` module(s) it resolved to — `design.content`, for instance, can be declared with no module behind it, the same way a declared companion is a declaration and not a rules module either. The framework baseline (`version`/`files`) is not recorded until step 11 runs `upgrade.py --apply`, so this file is the only state anything reads until then — and `upgrade.py` must be able to load it without crashing, treating a missing `companions` or a missing `bundles` the same way: absent means empty, never a crash (C1). Files written before this change lack `bundles` entirely; that must resolve to `[]`, not an error. Declare only what the project genuinely relies on: G-06 means an unmet declaration is a finding, so declaring a plugin nobody uses — or a bundle nothing backs — manufactures a permanent false alarm. Verify with `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/check_companions.py"` before finishing.
+7a. **Design artifacts** — only when a design bundle was selected:
+   - `design-tokens.json` at the project root, seeded from
+     `${CLAUDE_PLUGIN_ROOT}/kit/tokens/`. Replace the `primitive.brand` ramp with
+     the project's brand; keep the semantic and component tiers. Prove it:
+     `python3 "${CLAUDE_PLUGIN_ROOT}/kit/scripts/validate_contrast.py" design-tokens.json`
+   - `src/components/`, `public/images/`, `reference/` with `.gitkeep` files
+   - One worked example component with its harness —
+     `src/components/Button/{Button.tsx,Button.states.html,index.ts}`.
+     `Button.tsx` copies from `${CLAUDE_PLUGIN_ROOT}/kit/examples/golden/Button.tsx`;
+     `index.ts` is its one-line re-export. **`kit/examples/golden/` ships no
+     `.states.html`** — there is nothing there to copy. Generate
+     `Button.states.html` instead: a harness that renders the copied `Button`
+     (its real `ds-btn` class, `data-variant`, `aria-pressed`, `aria-busy` —
+     not a re-styled clone) through all 8 states, in the grid-of-cells shape
+     `${CLAUDE_PLUGIN_ROOT}/kit/examples/component-states/button.html` already
+     demonstrates. A design project whose gates pass over zero harnesses is
+     green with nothing proven.
+   - `.mcp.json` with the server(s) Round 3's Figma/Notion/Drive answer named,
+     seeded from `${CLAUDE_PLUGIN_ROOT}/kit/templates/product-design/.mcp.json`.
+     **No secrets in it** — every value is `${VAR}` expansion, read from the
+     user's own shell at launch, never written here. Remind the user to set
+     those variables in step 5's closing report.
+   - `npm i -D playwright && npx playwright install chromium`, so the render
+     gates resolve a browser rather than reporting SKIPPED.
 8. Local stack + `scripts/dev-reset.sh`:
    - Multi-instance project → `docker-compose.multi.yml` (two app instances, nginx round-robin, redis, and a **separate migrate step**) plus `scripts/nginx-lb.conf`. **This is the default.** One instance locally makes every statefulness bug invisible until production.
    - Single-instance project → `docker-compose.yml`, and ADR 002 recording that choice with its reversal cost.
@@ -241,7 +284,7 @@ When all three checks pass, delete `.claude/.init-state.json`. Success is the on
 
 ## Step 5 — Report
 
-Print the file tree written, the verify command, and **the three things the user must fill in themselves** (credentials, the real schema, the first endpoint). Then stop. Do not start building features.
+Print the file tree written, the verify command, and **the three things the user must fill in themselves** (credentials, the real schema, the first endpoint). If a design bundle wrote `.mcp.json`, add a fourth: the MCP env vars it expects (`FIGMA_API_KEY` and friends), set in the user's own shell — never in the file. Then stop. Do not start building features.
 
 ---
 

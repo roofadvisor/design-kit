@@ -6,7 +6,7 @@
 |---|---|---|
 | "it pulls data from a few APIs" | data-integration module, adapters, fixtures | "Which ones, and are any of them metered or paid?" |
 | "it handles files" | storage module — but not necessarily determinism | "Who uploads them, how big, and does anyone else fetch them by URL?" |
-| "there's a dashboard" | frontend module may apply | "Is it internal-only, or does anyone outside the company see it?" |
+| "there's a dashboard" | one or more `design-*` modules may apply | "Is it internal-only, or does anyone outside the company see it?" |
 | "it does some calculations" | possible money module | "Do any of those numbers turn into an invoice, payout, or price?" |
 | "it's kind of live already" | livesystem module, RETROFIT mode | "What's the blast radius if something in there breaks right now?" |
 | "just a simple CRUD app" | still needs core + api + database | "What happens when two of those integrations disagree about the same record?" |
