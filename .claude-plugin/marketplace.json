@@ -1,0 +1,13 @@
+{
+  "name": "roofadvisor",
+  "owner": {
+    "name": "RoofAdvisor"
+  },
+  "plugins": [
+    {
+      "name": "design-kit",
+      "source": "./",
+      "description": "UX/UI design toolkit — workflow + aesthetic skills, design commands, a design-critic agent, tokens, component specs, and WCAG verification gates."
+    }
+  ]
+}
