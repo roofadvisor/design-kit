@@ -1,7 +1,7 @@
 {
-  "name": "design-kit",
-  "version": "1.0.0",
-  "description": "UX/UI design toolkit: 24 skills (17 workflow + 7 aesthetic), 4 commands, a design-critic agent, DTCG tokens, 42 component specs, WCAG verification gates. Audited fork of plugin87/ux-ui-agent-skills with 40+ fixes; brand design-system library deliberately excluded (it lives in Claude Design).",
+  "name": "dev-kit",
+  "version": "2.0.0",
+  "description": "Development and design framework: interview-driven scaffolding, composable rules modules, safety hooks, audit agents, DTCG design tokens, component specs, and WCAG verification gates.",
   "author": {
     "name": "RoofAdvisor"
   }

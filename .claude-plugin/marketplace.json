@@ -1,13 +1,16 @@
 {
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "roofadvisor",
+  "description": "RoofAdvisor's Claude Code plugins.",
   "owner": {
     "name": "RoofAdvisor"
   },
   "plugins": [
     {
-      "name": "design-kit",
+      "name": "dev-kit",
       "source": "./",
-      "description": "UX/UI design toolkit — workflow + aesthetic skills, design commands, a design-critic agent, tokens, component specs, and WCAG verification gates."
+      "description": "Development and design framework: lifecycle process, interview-driven scaffolding, composable rules modules, safety hooks, audit agents, design tokens, and WCAG verification gates.",
+      "category": "workflow"
     }
   ]
 }
