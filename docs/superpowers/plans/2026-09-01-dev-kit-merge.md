@@ -352,7 +352,6 @@ light/dark completeness, and `verify_states.mjs` does not check eight-state
 completeness. Task 8 Step 6a re-audits and promotes what its wiring genuinely
 enforces. A registry row claiming a gate that does not run is the one defect this
 file exists to prevent.
-```
 
 - [ ] **Step 2: Run the registry test**
 
