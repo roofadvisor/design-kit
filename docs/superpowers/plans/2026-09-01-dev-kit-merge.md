@@ -16,7 +16,13 @@
 - `${CLAUDE_PLUGIN_ROOT}` does **not** resolve inside a project's `.claude/settings.json` (A18). Hooks are declared only in the plugin's own `hooks/hooks.json` and self-gate via `hook_opted_in()`.
 - Every hook must fail closed: a guard that cannot evaluate its input exits 2, never 0 (G-03).
 - Rules modules carry frontmatter `id:` and `always_apply:`. `REGISTRY.md` is never copied into a project.
-- Registry status vocabulary is fixed: `HOOK` / `TEST` / `GATE` / `AGENT` / `LINT` / `PROSE`. A rule with no enforcement is recorded as `PROSE`, never omitted.
+- Registry status vocabulary is fixed: `HOOK` / `TEST` / `GATE` / `AGENT` / `LINT` /
+  `PROSE` / `JUDGMENT`. A rule with no enforcement is recorded, never omitted.
+  `PROSE` and `JUDGMENT` are not interchangeable: `PROSE` means "written down only,
+  **will eventually be ignored**" — a debt state someone should later mechanise.
+  `JUDGMENT` means "correctly prose, mechanising it would produce false positives" —
+  a finished state. Filing a judgment call as `PROSE` invites a future contributor
+  to automate something that should not be automated.
 - After any registry or module change, `bash tests/render_registry_test.sh` must pass.
   Note: bare `python3 scripts/render_registry.py --validate` does NOT work in this repo —
   it renders a *project's* `.claude/rules/manifest.json` against the plugin's registry, and
@@ -1086,6 +1092,24 @@ in a directory this plugin excludes:
 - `kit/taste/aesthetic-systems.md:176` says "138 named design systems in
   `design-systems/library/`". Seven of the 138 are now inline. Correct the count
   or the location so the sentence is true.
+
+- [ ] **Step 3b: Two registry corrections from Task 4's review**
+
+Added 2026-09-01 (both Minor, both errors in the plan's own table rather than in
+Task 4's execution).
+
+- `DS-02` and `DS-06` read `open` in the Promote-when column while their six
+  siblings name the specific missing check. Both are in the same "no script exists
+  at all" bucket as `DS-03` and `DS-05` — confirmed by grep across `kit/scripts/`
+  and `scripts/`. Name their gaps the way the siblings do.
+- `DS-09`'s `Should be` column reads `PROSE`, the only row in 88 where that
+  appears. It should be `JUDGMENT`: deciding a SemVer level and writing a
+  changelog entry is a judgment call, and mechanising it would produce false
+  positives. Every comparable rule in the file (`C-07`, `S-06`, `S-08`, `S-09`,
+  `K-04`) uses `JUDGMENT`. `PROSE` files it as debt someone will later try to
+  automate, wrongly.
+
+Verify: `bash tests/render_registry_test.sh` still passes.
 
 - [ ] **Step 4: Verify nothing that should have changed was missed**
 
