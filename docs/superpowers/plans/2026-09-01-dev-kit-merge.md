@@ -928,3 +928,85 @@ git commit -m "docs: dev-kit 2.0.0 release notes and install instructions"
 - **`roof-club` namespace migration.** Its `CLAUDE.md` references `f4d-kit:*`. Task 11 gives `project-audit` the check that finds it; the fix belongs in that repo, not this one.
 - **Archiving `f4d/f4d-dev-env-configurator`.** Left as a redirect. Archiving is reversible and can wait for the first clean release.
 - **D-02 and D-06 enforcement.** Both registered as `PROSE`. Promoting them is `promote-rule`'s job once there is a gate to promote them to.
+
+---
+
+### Task 13: Identity sweep — f4d-kit to dev-kit
+
+Added 2026-09-01 after Task 1's review found the plugin still self-identifies as
+`f4d-kit` in live user-facing output. **Runs after Task 11 and before Task 12**, so
+that tasks 2-11 cannot reintroduce strings this sweep has already cleaned.
+
+**Files:**
+- Modify: every shipped file containing `f4d-kit` — 26 across `hooks/`, `skills/`,
+  `templates/`, `scripts/`, `tests/`
+- Modify: `START_HERE.md`
+- Test: `bash tests/hooks_test.sh`, `bash scripts/verify.sh`
+
+**Interfaces:**
+- Consumes: the merged tree from every prior task.
+- Produces: a plugin whose runtime output names itself correctly. Task 12's
+  clean-room install verifies the result.
+
+- [ ] **Step 1: Fix the user-facing runtime strings first**
+
+`hooks/guard.sh`'s `deny()` prints `BLOCKED by f4d-kit [$1]: $2` — every guard
+denial a user sees names the wrong plugin. `hooks/hooks.json`'s `description`
+says `f4d-kit enforcement hooks (A18)`. Change both to `dev-kit`.
+
+`tests/hooks_test.sh` asserts on the literal string `BLOCKED by f4d-kit [C-02]`.
+Update the assertion in the same commit — a test asserting the old identity is
+what would silently permit a regression back to it.
+
+- [ ] **Step 2: Sweep the remaining occurrences**
+
+```bash
+grep -rl "f4d-kit" hooks/ skills/ templates/ scripts/ tests/ commands/ agents/ *.md
+```
+
+Review each hit before changing it. Three kinds appear and only the first two
+get rewritten:
+
+- **Plugin identity** — the plugin naming itself. Rewrite to `dev-kit`.
+- **Skill namespaces** — `f4d-kit:project-init` and similar. Rewrite to `dev-kit:`.
+- **Historical record** — `CHANGELOG.md` entries, `docs/decisions/*`,
+  `docs/acceptance/*`, and BACKLOG items describing what f4d-kit did at the time.
+  **Leave these alone.** Rewriting history to claim dev-kit made decisions it did
+  not is a worse defect than a stale name.
+
+- [ ] **Step 3: Correct `START_HERE.md`**
+
+It states "This repo is **f4d-kit**", tells the reader to expect the remote
+`github.com/f4d/f4d-dev-env-configurator`, gives `claude plugin install f4d-kit@f4d`,
+and lists per-test expectations of `pass=57 fail=0` that match neither the current
+suite nor several test files that now exist. Update the identity, the remote
+(`github.com/roofadvisor/dev-kit`), the install command
+(`claude plugin install dev-kit@roofadvisor`), and either correct the counts
+against a real run or remove them — a stale expected count trains readers to
+ignore a failing suite.
+
+- [ ] **Step 4: Verify nothing that should have changed was missed**
+
+```bash
+grep -rn "f4d-kit" hooks/ skills/ templates/ scripts/ tests/ commands/ agents/
+```
+
+Every remaining hit must be historical record per Step 2. List them in the report
+with one line each saying why it stays.
+
+- [ ] **Step 5: Prove the suites still pass**
+
+```bash
+bash tests/hooks_test.sh
+```
+
+Expected: `pass=88 fail=1` or better — the one failure is a pre-existing macOS
+`/var/folders` telemetry-path test. Any *new* failure means the sweep changed
+behaviour, not just names.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add -u
+git commit -m "refactor: plugin identifies as dev-kit, not f4d-kit"
+```
