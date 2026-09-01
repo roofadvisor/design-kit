@@ -557,6 +557,32 @@ diff <(sed '1,/^---$/d' templates/rules/design-a11y.md) \
 
 Expected: the three rules files have counterparts under `templates/rules/design-*.md` from Task 3. Any content in the diff that is not a path rewrite is a gap — fix Task 3's module before continuing.
 
+- [ ] **Step 1a: Relocate the assets that must outlive the template**
+
+Added 2026-09-01 (ruling R-22). Task 6 wired `.mcp.json` into the interview:
+`skills/project-init/SKILL.md:250` seeds it from
+`${CLAUDE_PLUGIN_ROOT}/kit/templates/product-design/.mcp.json` — inside the very
+directory Step 2 deletes. Deleting first would leave the interview pointing at a
+file that no longer exists.
+
+Move it to the framework's own scaffold-template home, matching that directory's
+naming convention (`CLAUDE.md.tmpl`, `env.example.tmpl`, `gitignore.tmpl`, …):
+
+```bash
+git mv kit/templates/product-design/.mcp.json templates/scaffold/mcp.json.tmpl
+```
+
+Then repoint `skills/project-init/SKILL.md:250` at the new path, and confirm no
+other live reference into `product-design/` survives Step 2. The full reference
+list at the time of writing:
+
+| Site | Disposition |
+|---|---|
+| `skills/project-init/SKILL.md:250` | repoint to `templates/scaffold/mcp.json.tmpl` |
+| `commands/scaffold-project.md:5,44` | deleted by Step 2 along with the command |
+| `kit/scripts/validate_template.py:2,28` | retargeted by Step 3 |
+| `kit/scripts/build_tokens.mjs:19` | a comment describing the template shape — update the wording, it is not a path dependency |
+
 - [ ] **Step 2: Delete the command and its template**
 
 ```bash
