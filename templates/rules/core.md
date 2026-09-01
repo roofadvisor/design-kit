@@ -31,3 +31,8 @@ gh pr create --fill
 ## Secrets
 - Read config from environment only. Never inline a credential, never echo one, never write one to a fixture.
 - `.env.example` is committed with keys and empty values. `.env` never is.
+
+## Output
+- A partial output is a broken output. Deliver whole files, never placeholders
+  such as `// ... rest unchanged`. If asked for N items, deliver all N. Split at
+  clean boundaries only when length forces it, and continue to completion.
