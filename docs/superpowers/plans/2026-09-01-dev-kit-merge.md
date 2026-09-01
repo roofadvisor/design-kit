@@ -1108,6 +1108,27 @@ Do not rename them in a bare sweep. Verify whichever route you take by running
 the renderer twice against a scratch repo seeded with an old-marker `CLAUDE.md`
 and confirming exactly one block exists afterwards.
 
+- [ ] **Step 2b: Regenerate the repo's own stale instruction files**
+
+Added 2026-09-01 from Task 6 (ruling R-19). `CLAUDE.md:20` and `AGENTS.md:20` in
+this repo still list `frontend` as a rules module. Task 3 deleted
+`templates/rules/frontend.md`; these files are **generated** by
+`render_instructions.py` and nobody re-ran it, so they now advertise a module
+that does not exist.
+
+Regenerate them — but only after resolving Step 2a's marker decision, and in that
+same commit. The two interact: the renderer locates its block by the BEGIN/END
+marker, so regenerating with a changed marker is exactly the case that appends a
+second block instead of replacing the first.
+
+Also fix the prose reference at `skills/org-profile/SKILL.md:78`, which offers
+"storage, money, blockchain, or frontend modules" — `frontend` is now four design
+modules and should read that way.
+
+Verify: no `frontend` remains as a live module reference —
+`grep -rn '\bfrontend\b' CLAUDE.md AGENTS.md skills/ templates/rules/` returns
+only historical mentions, and exactly one generated block exists in each file.
+
 - [ ] **Step 3a: Close the inlined-aesthetic loose threads**
 
 Added 2026-09-01 from Task 2's review (two Minor findings, folded here rather
