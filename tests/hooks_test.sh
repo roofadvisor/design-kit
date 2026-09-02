@@ -407,6 +407,24 @@ dc2=$(mktemp -d); ( cd "$dc2" && git init -q && git config user.email t@t && git
 if [ "$got" -eq 0 ]; then echo "  PASS  ignores docs-only changes"; pass=$((pass+1))
 else echo "  FAIL  ignores docs-only changes (got $got)"; fail=$((fail+1)); fi
 
+# design-tokens.json is a design project's source of truth, not project
+# config -- but it ends in .json, so the blanket .json$ exclusion below
+# (written for package.json and lockfiles) silently swallows it too, and a
+# changed token file goes unnoticed by done-check.sh.
+dt=$(mktemp -d); ( cd "$dt" && git init -q && echo '{}' > design-tokens.json && git add -A ); mkstate "$dt"
+( cd "$dt" && bash "$HOOKS/done-check.sh" >/dev/null 2>&1 ); got=$?
+if [ "$got" -eq 2 ]; then echo "  PASS  blocks done when design-tokens.json changed with no verify"; pass=$((pass+1))
+else echo "  FAIL  blocks done when design-tokens.json changed with no verify (got $got)"; fail=$((fail+1)); fi
+
+# Guard against over-correcting the fix for the case above: package.json must
+# stay excluded. A filter that re-admits every *.json would make the
+# design-tokens.json case pass for the wrong reason -- by no longer filtering
+# anything -- so this must keep passing both before and after that fix.
+pkg=$(mktemp -d); ( cd "$pkg" && git init -q && echo '{}' > package.json && git add -A ); mkstate "$pkg"
+( cd "$pkg" && bash "$HOOKS/done-check.sh" >/dev/null 2>&1 ); got=$?
+if [ "$got" -eq 0 ]; then echo "  PASS  ignores package.json-only changes"; pass=$((pass+1))
+else echo "  FAIL  ignores package.json-only changes (got $got)"; fail=$((fail+1)); fi
+
 echo "verify-record.sh"
 vr=$(mktemp -d); ( cd "$vr" && git init -q ); mkstate "$vr"
 echo '{"tool_input":{"command":"pnpm verify"}}' | (cd "$vr" && bash "$HOOKS/verify-record.sh" >/dev/null 2>&1)
@@ -417,6 +435,15 @@ vr2=$(mktemp -d); ( cd "$vr2" && git init -q ); mkstate "$vr2"
 echo '{"tool_input":{"command":"ls -la"}}' | (cd "$vr2" && bash "$HOOKS/verify-record.sh" >/dev/null 2>&1)
 if [ ! -f "$vr2/.claude/.last-verify" ]; then echo "  PASS  ignores unrelated commands"; pass=$((pass+1))
 else echo "  FAIL  ignores unrelated commands"; fail=$((fail+1)); fi
+
+# /gate must count as a verify run. accuracy_report.mjs matches none of the
+# patterns above, and its child gates run via execSync, which
+# PostToolUse:Bash never observes -- so running /gate leaves .last-verify
+# absent and done-check.sh keeps blocking a session that just verified.
+gate=$(mktemp -d); ( cd "$gate" && git init -q ); mkstate "$gate"
+echo '{"tool_input":{"command":"node kit/scripts/accuracy_report.mjs"}}' | (cd "$gate" && bash "$HOOKS/verify-record.sh" >/dev/null 2>&1)
+if [ -f "$gate/.claude/.last-verify" ]; then echo "  PASS  /gate's accuracy_report run counts as a verify"; pass=$((pass+1))
+else echo "  FAIL  /gate's accuracy_report run counts as a verify"; fail=$((fail+1)); fi
 
 echo "format.sh"
 # Self-contained fixture rather than relying on the ambient cwd: format.sh now
@@ -594,7 +621,7 @@ if [ "$(cat "$KIT_LOG_PATH" 2>/dev/null | cksum)" = "$KIT_LOG_BEFORE" ]; then
   echo "  PASS  kit's own enforcement log unchanged by the test run"; pass=$((pass+1))
 else echo "  FAIL  tests modified the kit's real enforcement log"; fail=$((fail+1)); fi
 
-rm -rf "$tmp" "$dc" "$dc2" "$vr" "$vr2" "$et" "$et2" "$et3" "$et4" "$et5" "$fm" "$ni" "$ni2" "$nogit" "$mal"
+rm -rf "$tmp" "$dc" "$dc2" "$vr" "$vr2" "$et" "$et2" "$et3" "$et4" "$et5" "$fm" "$ni" "$ni2" "$nogit" "$mal" "$gate" "$dt" "$pkg"
 echo
 echo "pass=$pass fail=$fail"
 [ "$fail" -eq 0 ] || exit 1
