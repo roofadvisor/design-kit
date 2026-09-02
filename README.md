@@ -13,22 +13,6 @@ see the token-cost note under *What's inside*.)
 
 ## Install
 
-> **Not yet published.** The commands below are what installation looks like
-> once this branch is pushed and promoted to the default branch — neither has
-> happened yet; the repo's default branch is still `design-kit` 1.0.0. Run
-> `claude plugin marketplace add roofadvisor/dev-kit` today and the add step
-> succeeds, but `claude plugin install dev-kit@roofadvisor` then fails — the
-> marketplace it just fetched still declares only `design-kit`, not `dev-kit`.
-> Installing `design-kit@roofadvisor` instead would "succeed," silently, into
-> the old 1.0.0 plugin. Until this note is gone, install from a local
-> checkout:
-> ```bash
-> claude plugin marketplace add /path/to/this/repo
-> claude plugin install dev-kit@roofadvisor
-> ```
-
-Once published:
-
 ```bash
 claude plugin marketplace add roofadvisor/dev-kit
 ```
