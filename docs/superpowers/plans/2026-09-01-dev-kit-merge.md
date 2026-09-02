@@ -1207,6 +1207,43 @@ grep -rn "f4d-kit" hooks/ skills/ templates/ scripts/ tests/ commands/ agents/
 Every remaining hit must be historical record per Step 2. List them in the report
 with one line each saying why it stays.
 
+- [ ] **Step 4a: Stop `check_log_hygiene` firing on design tokens**
+
+Added 2026-09-02 (ruling R-27). `bash scripts/verify.sh` currently reports
+`VERIFY FAILED` on two gates. One is Step 2b's stale instruction files. The other
+is a word collision the merge created:
+
+```
+O-05 VIOLATIONS — payload/credential-shaped identifiers in log calls (16):
+  kit/scripts/lint_hardcodes.py:125  print(f"{f}:{n}: hardcoded {kind} '{val}' — use a token")
+  kit/scripts/validate_theme_refs.py:70  print(f"Theme defines {len(defined)} tokens.")
+```
+
+`check_log_hygiene.py` looks for credential-shaped identifiers near log calls.
+The design half talks about **design tokens** constantly, and its linters print
+their own findings to stdout. All 16 hits are a CLI tool describing colour and
+spacing values — no credential is involved in any of them.
+
+Sixteen false positives on one half of the merged plugin is the failure this
+framework names explicitly: a gate that fires wrongly gets disabled, and a
+disabled gate protects nothing.
+
+Fix it so the gate keeps protecting real logging while ignoring design-token
+prose. Options, in preference order — argue your choice:
+
+1. Scope the scan to exclude `kit/scripts/`, whose `print` calls are a CLI
+   tool's user-facing output, not application logging. Narrow and honest.
+2. Teach the checker that `token` adjacent to design vocabulary (`hardcoded`,
+   `theme`, `contrast`, `spacing`) is not credential-shaped. More precise,
+   more surface to get wrong.
+
+Do **not** silence it by deleting the rule or blanket-disabling the gate.
+O-05 protects real logging elsewhere in the plugin.
+
+Verify: `bash scripts/verify.sh` exits 0, and `check_log_hygiene` still reports
+findings when pointed at a genuine credential-shaped log line — prove that with
+a scratch fixture rather than assuming it.
+
 - [ ] **Step 5: Prove the suites still pass**
 
 ```bash
