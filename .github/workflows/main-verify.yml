@@ -7,9 +7,14 @@ name: main-verify
 # (C-06, C-08, G-05) measure a PR against its base and have no meaning on a
 # branch that IS the base; gates.yml owns those.
 
+# Branch is `main`, not `master`. This file arrived from f4d-dev-env-configurator,
+# whose default branch IS master; carried over unchanged it would have watched a
+# branch that does not exist here and never once run — a workflow that cannot
+# fire is the CI equivalent of the gates this merge spent its time un-breaking.
+# Caught the first time main moved, because nothing appeared in `gh run list`.
 on:
   push:
-    branches: [master]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
