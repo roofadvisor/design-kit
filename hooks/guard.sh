@@ -6,8 +6,13 @@ hook_opted_in || exit 0
 
 input=$(cat)
 cmd=$(hook_field "$input" "command")
-[ -z "$cmd" ] && cmd=$(hook_field "$input" "file_path")
-[ -z "$cmd" ] && cmd=$(hook_field "$input" "path")
+# Which field it came from matters for the dotenv rule below: a command can be
+# read for intent (`cat` leaks, `test -f` does not), a bare path cannot. Read
+# would dump the file and an Edit payload carries its content, so a path gets
+# the strict treatment.
+via_path=""
+[ -z "$cmd" ] && { cmd=$(hook_field "$input" "file_path"); [ -n "$cmd" ] && via_path=1; }
+[ -z "$cmd" ] && { cmd=$(hook_field "$input" "path"); [ -n "$cmd" ] && via_path=1; }
 
 # A guard that cannot read its input must not pretend to pass. This hook is
 # wired with a matcher (Write|Edit|Bash), so every payload it sees MUST yield a
@@ -59,23 +64,70 @@ if [ -z "$sql_hit" ]; then
 fi
 [ -n "$sql_hit" ] && deny "C-03" "destructive database operation. Use a migration, or scripts/dev-reset.sh locally."
 
+# Dotenv files: the question is whether a VALUE reaches this transcript, not
+# whether a filename appears in the command.
+#
+# Matching the filename alone denied `test -f`, `ls`, `wc`, `cp`, `cut -d= -f1`
+# and every `process.env` / `os.environ` in ordinary Node and Python — none of
+# which emit a value — while catching `cat`, which does. A guard that blocks the
+# safe majority is one people learn to route around, and the industry consensus
+# on secret scanning says the fix is narrower rules, not broader ones.
+#
+# Two stages: is a dotenv file referenced at all, and if so would this command
+# print it? The reference test is anchored so a property access (preceded by an
+# identifier character) is not a filename.
+#
+# Known imprecision: `case` globbing cannot prove the reader verb TARGETS the
+# dotenv file, only that both appear. `cat README.md && test -f .env` therefore
+# denies. That fails safe, it is rare, and the alternative is a shell parser in
+# a hook that has to stay fast and dependency-free.
+envref=""
 case "$scrubbed" in
-  # `.env` is anchored, not a bare substring. Unanchored it denied every command
-  # containing `process.env`, `os.environ`, or `import.meta.env` — three of the
-  # most common expressions in Node and Python. It blocked this repo's own
-  # design-gate resolver, which reads process.env.CLAUDE_CONFIG_DIR, three times
-  # while that fix was being tested; a guard that fires on ordinary code is a
-  # guard people route around. A file named .env is preceded by a path
-  # separator, whitespace, a quote, or the start of the command. A property
-  # access is preceded by an identifier character. Anchoring on that keeps every
-  # real read blocked — including one sitting beside a property access in the
-  # same command — while letting the property access through.
-  ".env"*|*[!A-Za-z0-9_]".env"*|*"id_rsa"*|*".pem"*|*"credentials.json"*)
-      deny "C-01" "secret material is off-limits. Use .env.example and describe the variable instead." ;;
+  ".env"*|*[!A-Za-z0-9_]".env"*) envref=1 ;;
+esac
+if [ -n "$envref" ]; then
+  # A file-targeting tool gives no verb to judge. Read dumps the file outright
+  # and an Edit payload carries its content, so a bare path stays strict.
+  [ -n "$via_path" ] && deny "C-01" "opening that file would put its values in this transcript. Reference a value as \$VAR, or work on the .example variant."
+  padded=" $scrubbed"
+  reader=""
+  for v in cat less more head tail bat xxd od strings nl open; do
+    case "$padded" in *[!A-Za-z0-9_-]"$v "*) reader=$v; break ;; esac
+  done
+  # grep prints matching lines — and matching lines are values — unless it was
+  # asked for a count, a verdict, or filenames only.
+  if [ -z "$reader" ]; then
+    case "$padded" in
+      *[!A-Za-z0-9_-]grep\ *|*[!A-Za-z0-9_-]egrep\ *|*[!A-Za-z0-9_-]rg\ *)
+          case "$padded" in
+            *" -c"*|*" -q"*|*" -l"*|*" -L"*|*--count*|*--quiet*|*--files-with-matches*) ;;
+            *) reader="grep" ;;
+          esac ;;
+    esac
+  fi
+  [ -n "$reader" ] && deny "C-01" "\`$reader\` would print that file's values into this transcript. Reference a value as \$VAR, list key names with \`cut -d= -f1\`, or test presence with \`grep -c\`."
+fi
+
+case "$scrubbed" in
+  # Key material, unlike a dotenv file, has no safe read: any mention denies.
+  # It is also rare in ordinary work, so the strictness costs nothing.
+  *"id_rsa"*|*".pem"*|*"credentials.json"*)
+      deny "C-01" "key material is off-limits. Reference it by path in config; never read it into a transcript." ;;
   *"keystore"*|*"mnemonic"*|*"seed phrase"*|*".key"*)
       deny "C-01" "key material is off-limits." ;;
   *"PRIVATE_KEY"*|*"SECRET_KEY"*|*"_TOKEN="*|*"API_KEY="*)
       deny "C-01" "never interpolate a credential into a command. Reference the env var by name." ;;
+  # Credential literals by issuer shape. The arm above only catches a value
+  # assigned to a recognisably-named variable, so `printf sk-live-ABC123 > .env`
+  # walked straight past it — a literal secret in the command text, which is the
+  # leak this rule exists to stop. Known prefixes rather than entropy scoring:
+  # the same rule-first approach gitleaks takes, and it needs no math in a hook.
+  # Short prefixes are anchored so `task-`, `--disk-usage` and `risk-` do not match.
+  *[!A-Za-z0-9_]"sk-"*|*[!A-Za-z0-9_]"sk_live"*|*[!A-Za-z0-9_]"pk_live"*|\
+  *"ghp_"*|*"gho_"*|*"ghs_"*|*"github_pat_"*|*"xoxb-"*|*"xoxp-"*|*"xapp-"*|\
+  *"AKIA"[A-Z0-9][A-Z0-9][A-Z0-9]*|*"ASIA"[A-Z0-9][A-Z0-9][A-Z0-9]*|\
+  *"-----BEGIN "*|*"glpat-"*|*"npm_"*)
+      deny "C-01" "that is a credential literal sitting in the command text, where this transcript keeps it. Put the value in your shell or a dotenv file and reference it as \$VAR." ;;
   # The flag itself, terminal or followed by whitespace — not every flag that
   # merely starts with it (`--broadcast-mode=off` broadcasts nothing).
   *"--broadcast"|*"--broadcast"[[:space:]]*)

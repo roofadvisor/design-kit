@@ -105,6 +105,52 @@ check "still blocks a real .env read"      2 guard.sh '{"tool_input":{"command":
 check "still blocks .env after a slash"    2 guard.sh '{"tool_input":{"command":"cat ./config/.env"}}'
 check "blocks .env even beside a property" 2 guard.sh '{"tool_input":{"command":"node -e \"process.env.X\" && cat .env"}}'
 
+# C-01, second pass: the question is whether a VALUE reaches the transcript, not
+# whether a filename appears. Reading a dotenv file out loud leaks; checking that
+# it exists, counting its keys, copying it, or appending an already-exported
+# variable to it do not. Matching the filename alone conflated all of these and
+# denied the safe majority — which is how a guard trains people to route around
+# it. Key material (id_rsa/.pem/credentials.json) keeps denying on any mention:
+# it is rare in ordinary work and has no safe read.
+#
+# Blocked: the command would print the file's contents.
+check "blocks cat of a dotenv"             2 guard.sh '{"tool_input":{"command":"cat .env"}}'
+check "blocks head of a dotenv"            2 guard.sh '{"tool_input":{"command":"head -20 .env"}}'
+check "blocks tail of a dotenv"            2 guard.sh '{"tool_input":{"command":"tail -f .env"}}'
+check "blocks less of a dotenv"            2 guard.sh '{"tool_input":{"command":"less .env"}}'
+check "blocks a full-path cat"             2 guard.sh '{"tool_input":{"command":"/bin/cat ./config/.env"}}'
+check "blocks grep that prints values"     2 guard.sh '{"tool_input":{"command":"grep API_KEY .env"}}'
+check "blocks strings of a dotenv"         2 guard.sh '{"tool_input":{"command":"strings .env"}}'
+
+# Allowed: no value is emitted.
+check "allows existence check"             0 guard.sh '{"tool_input":{"command":"test -f .env && echo present"}}'
+check "allows ls of a dotenv"              0 guard.sh '{"tool_input":{"command":"ls -la .env"}}'
+check "allows wc of a dotenv"              0 guard.sh '{"tool_input":{"command":"wc -l .env"}}'
+check "allows grep -c (count only)"        0 guard.sh '{"tool_input":{"command":"grep -c API_KEY .env"}}'
+check "allows grep -q (quiet)"             0 guard.sh '{"tool_input":{"command":"grep -q API_KEY .env"}}'
+check "allows cut to key names only"       0 guard.sh '{"tool_input":{"command":"cut -d= -f1 .env"}}'
+check "allows copying a dotenv"            0 guard.sh '{"tool_input":{"command":"cp .env .env.bak"}}'
+check "allows in-place sed"                0 guard.sh '{"tool_input":{"command":"sed -i \"\" s/a/b/ .env"}}'
+check "allows appending an exported var"   0 guard.sh '{"tool_input":{"command":"echo \"KEY=$MY_EXPORTED\" >> .env"}}'
+
+# Credential literals by issuer shape — the leak the reader logic above cannot
+# see, because writing a value into a file emits nothing to the transcript while
+# the value sits in the command text regardless. Prefixes rather than entropy
+# scoring: no math in a hook. Short ones are anchored, because `task-`,
+# `--disk-usage` and `risk-` all contain `sk-`, and ASIA is a continent.
+check "blocks a stripe-shaped literal"     2 guard.sh '{"tool_input":{"command":"deploy --key sk-live-4eC39HqLyjWDarjtT1zdp7dc"}}'
+check "blocks a github token literal"      2 guard.sh '{"tool_input":{"command":"curl -H auth:ghp_abc123def456ghi789"}}'
+check "blocks a real AWS key shape"        2 guard.sh '{"tool_input":{"command":"export AKIA1234567890ABCDEF"}}'
+check "blocks a literal written to a file" 2 guard.sh '{"tool_input":{"command":"printf sk-live-ABC123 > .env"}}'
+check "allows task- (contains sk-)"        0 guard.sh '{"tool_input":{"command":"npm run task-runner"}}'
+check "allows --disk-usage"                0 guard.sh '{"tool_input":{"command":"df --disk-usage /"}}'
+check "allows risk- prefixed words"        0 guard.sh '{"tool_input":{"command":"grep risk-score report.md"}}'
+check "allows ASIA as a word"              0 guard.sh '{"tool_input":{"command":"echo ASIA is a continent"}}'
+
+# Key material keeps its old behaviour: any mention denies.
+check "blocks any id_rsa mention"          2 guard.sh '{"tool_input":{"command":"ls -la ~/.ssh/id_rsa"}}'
+check "blocks any .pem mention"            2 guard.sh '{"tool_input":{"command":"test -f cert.pem"}}'
+
 echo "rule-zero.sh"
 check "blocks V2 variant"      2 rule-zero.sh "{\"tool_input\":{\"file_path\":\"$tmp/reportV2.ts\"}}"
 check "blocks -final variant"  2 rule-zero.sh "{\"tool_input\":{\"file_path\":\"$tmp/report-final.ts\"}}"
