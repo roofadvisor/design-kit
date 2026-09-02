@@ -18,8 +18,16 @@ set -uo pipefail
 . "$(dirname "${BASH_SOURCE[0]}")/_parse.sh"
 hook_opted_in || exit 0
 
+# `git rev-parse --show-toplevel` returns the PHYSICAL path, with symlinks resolved.
+# `pwd` returns the LOGICAL one, preserving whatever spelling the shell was cd'd
+# through. Compare the two and they never match under a symlink — the root/subdir
+# test below reports "subdir" while standing at the root, and the prefix strip
+# silently fails, writing the whole absolute path into the relative-path field.
+# Measured on macOS, where mktemp -d hands back /var/folders/... and /var is a
+# symlink to /private/var; equally reachable through any symlinked repo path.
+# `pwd -P` makes both sides physical.
 root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
-cwd=$(pwd)
+cwd=$(pwd -P)
 
 echo "=== PROJECT RULES (injected — cwd is $cwd) ==="
 

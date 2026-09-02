@@ -98,7 +98,6 @@ exists.
   Playwright: `npm i -D playwright && npx playwright install chromium`. Without it they
   fail or report SKIPPED honestly — a skipped gate is never a passed gate.
 - Paths inside skills/commands use `${CLAUDE_PLUGIN_ROOT}` — the plugin's install root.
-- `bash scripts/verify.sh` is the kit's own single verify command — see
-  [CHANGELOG.md](CHANGELOG.md)'s `2.0.0` entry for its one known, inherited
-  failure.
+- `bash scripts/verify.sh` is the kit's own single verify command. It exits 0
+  with every gate clean.
 - Provenance, upstream audit, and license status: [PROVENANCE.md](PROVENANCE.md).

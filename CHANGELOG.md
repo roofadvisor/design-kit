@@ -33,18 +33,26 @@ carries none of it (see README).
 **Known issues, disclosed rather than hidden:** this framework's own registry
 treats a gate that fires wrongly as worse than no gate, so the two failures
 below are named rather than suppressed. Neither is a regression introduced by
-this merge — both predate it — and neither is fixed in this release.
+this merge — both predate it. The first is fixed here; the second is not.
 
-- `bash scripts/verify.sh` exits 1, not 0. Every harness and every gate script
-  reports `clean` except one: `tests/hooks_test.sh`'s
-  `GREEN: expected a subdir/pkg/deep telemetry line` case, which fails
-  identically against the upstream `f4d-dev-env-configurator` checkout.
-  Root cause: macOS's `mktemp -d` returns a path under `/var/folders/...`,
-  and `/var` is itself a symlink to `/private/var` — the test's own
-  relative-path computation trips on that symlink and reports
-  `f3='var/folders/…'` where it expects `deep`. A test-environment artifact,
-  not a product defect; not fixed here because the test belongs to the
-  upstream repo, not this one.
+- **Fixed: `session-context.sh` wrote corrupt telemetry under any symlinked repo
+  path.** It read the working directory with `pwd` (logical, preserving whatever
+  spelling the shell was `cd`'d through) and compared it against
+  `git rev-parse --show-toplevel` (physical, symlinks resolved). Under a symlink
+  those never match, with two consequences: the prefix strip failed silently and
+  wrote the entire absolute path into the relative-path field, and the
+  root-versus-subdirectory test reported `subdir` while standing at the repo
+  root. `/retro` and `/project-audit` both read that log. Now `pwd -P`, making
+  both sides physical.
+
+  This surfaced as a `tests/hooks_test.sh` failure that also occurs upstream, and
+  was initially misdiagnosed — including in this changelog before release — as a
+  macOS test artifact, on the grounds that `mktemp -d` returns a path under
+  `/var/folders/...` where `/var` symlinks to `/private/var`. The test was right;
+  the hook was wrong. It is fixed **without modifying the test**, which is the
+  evidence: `bash tests/hooks_test.sh` goes from `pass=93 fail=1` to
+  `pass=94 fail=0` on the hook change alone, and `bash scripts/verify.sh` now
+  exits 0 with every gate clean.
 - `/gate` (`kit/scripts/accuracy_report.mjs`) reports **34/35**, not 35/35, on
   a clean-room install with Playwright genuinely resolving and rendering
   (verified via a real clean-room run, not inferred). The one failure is a
