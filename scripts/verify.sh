@@ -110,9 +110,12 @@ fi
 # the pattern a copied verify.sh would follow if one ever existed. The
 # automatic path that actually matters lives one level down:
 # skills/project-init/references/scaffold-spec.md's "Verify command by
-# stack" table appends the same accuracy_report.mjs invocation (guarded the
-# same way, on CLAUDE_PLUGIN_ROOT rather than a rules file, since a scaffolded
-# project's OWN verify script and CLAUDE.md are what carry it) to every
+# stack" table appends the same accuracy_report.mjs invocation — guarded not
+# on a rules file but on actually locating the plugin (prefer
+# $CLAUDE_PLUGIN_ROOT when set, else resolve it from Claude Code's own
+# ~/.claude/plugins/installed_plugins.json registry, since a scaffolded
+# project's OWN verify script and CLAUDE.md are what carry it, run from a
+# plain shell with no plugin-hook-scoped variable to lean on) — to every
 # project that actually selects a design bundle — so a real design project's
 # verify command, not this one, is where the gate genuinely fires.
 if [ -f "$KIT/.claude/rules/design-tokens.md" ]; then

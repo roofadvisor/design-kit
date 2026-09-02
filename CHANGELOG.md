@@ -74,6 +74,36 @@ this merge — both predate it. Both are fixed here.
   **35/35** (100%), and `measure_render.mjs --dark` on every
   `component-states/*.html` harness — `tabs.html` included — passes.
 
+**The design gate now has a real automatic path — say precisely what that
+means.** This merge's own problem statement was that the design half "never
+reaches the places that enforce anything": the gate (`accuracy_report.mjs`,
+what `/gate` runs) previously fired only when a human or agent typed `/gate`
+by hand, on no automatic path at all. `skills/project-init/references/scaffold-spec.md`'s
+"Verify command by stack" table now appends a design-gate fragment whenever a
+project selects a design module (`design-tokens` / `design-a11y` /
+`design-components`), written identically into `CLAUDE.md`, the project's
+`verify` script, and `.github/workflows/verify.yml`. The fragment resolves
+the plugin's install location itself rather than treating
+`${CLAUDE_PLUGIN_ROOT}` as an ordinary shell variable — outside a
+plugin-declared hook it is not one, confirmed empirically (unset in a plain
+Claude Code Bash tool call) — preferring it when a plugin-declared hook has
+actually set it, and otherwise reading the install path straight out of
+Claude Code's own `~/.claude/plugins/installed_plugins.json` registry, the
+same file `claude plugin install` itself writes.
+
+Precisely what "automatic" covers: the gate now runs for real every time a
+scaffolded design project's own `verify` command runs from a shell where the
+plugin is installed — a human or agent running `npm run verify` / `bash
+verify.sh` locally, and automatically via `ship-it` step 1 — with no
+Claude-specific environment required. It does **not** run on a bare GitHub
+Actions runner: no plugin is installed there, so `templates/github/gates.yml`
+still carries no design job (argued in that file) and the verify command's
+design-gate segment prints `design gate: SKIPPED — …` and exits 0 rather than
+failing on a precondition CI cannot meet — a skipped gate is disclosed as
+exactly that, never as a pass. Read `GATE` anywhere in the rules registry
+(`templates/rules/REGISTRY.md`) with that boundary in mind: real enforcement
+wherever the plugin is present, an honest, non-blocking skip everywhere else.
+
 Plugin identity: `dev-kit@roofadvisor` 2.0.0. Component inventory: 32 skills
 (17 inherited from `design-kit`, 15 from `f4d-kit`), 2 commands, 5 agents,
 4 hook events, ~3,423 always-on tokens on a clean-room install — see README

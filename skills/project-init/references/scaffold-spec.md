@@ -121,39 +121,49 @@ From `${CLAUDE_PLUGIN_ROOT}/templates/scaffold/CLAUDE.md.tmpl`. Fill every `{{TO
 | Both | chain them with `&&`, Python first |
 | + contracts module | append `&& pnpm contracts:check` |
 | + blockchain module | append `&& forge fmt --check && forge test && forge snapshot --check` |
-| + any design module (`design-tokens` / `design-a11y` / `design-components` in `decided_modules`) | append `&& { [ -z "${CLAUDE_PLUGIN_ROOT:-}" ] && echo "design gate: SKIPPED — no CLAUDE_PLUGIN_ROOT (not a Claude Code session)" || node "${CLAUDE_PLUGIN_ROOT:-}/kit/scripts/accuracy_report.mjs"; }` |
+| + any design module (`design-tokens` / `design-a11y` / `design-components` in `decided_modules`) | append `&&` followed by the **design-gate resolver fragment** below, verbatim |
 
 Write it once, identically, in three places: `CLAUDE.md`, the `verify` script, and the CI workflow. If they can drift, they will.
 
-**Why the design row is a guarded conditional, and why `templates/github/gates.yml`
-gets no design job.** `accuracy_report.mjs` (what `/gate` runs) is the *plugin's*
-own self-check: every one of its checks runs against
-`${CLAUDE_PLUGIN_ROOT}/kit/`'s own bundled tokens and example harnesses — its
-`KIT_ROOT` constant is hardcoded to its own directory, never to this project's
-`design-tokens.json` or `src/components/`. `${CLAUDE_PLUGIN_ROOT}` resolves only
-inside an active Claude Code session with the plugin installed; it is never set
-on a bare CI runner, which also has no `kit/` tree to point at. That is exactly
-why this row, unlike its siblings above, is a conditional rather than a bare
-command: this section requires the *same string* in `CLAUDE.md`, the `verify`
-script, **and** the CI workflow (Step 10 renders `{{VERIFY}}` from the same
-command Step 9 wrote) — an unguarded `node "${CLAUDE_PLUGIN_ROOT}/..."` would be
-byte-identical everywhere and still silently fail every scaffolded design
-project's CI on every single PR, forever, since neither the variable nor `kit/`
-will ever exist on that runner. The guard keeps the command genuinely identical
-in all three places (nothing to special-case, nothing to drift) while being
-correct in each: it runs for real wherever the plugin is present — a human or
-agent running the project's own `verify` locally, and `ship-it` step 1, both
-always inside a Claude Code session — and prints an honest `SKIPPED` line and
-exits 0 everywhere else, instead of failing on a precondition CI cannot meet.
-`templates/github/gates.yml` gets no matching design job for the identical
-reason one level up: making one work for real would mean vendoring `kit/`'s
-scripts, tokens, and example harnesses, plus a Playwright/Chromium install,
-into every scaffolded project's CI checkout — reviving the
-copy-the-engine-into-every-project model duplicate review #1 retired for this
-merge (see the merge design doc). `skills/project-audit/SKILL.md` § *Design*
-already treats "Playwright unresolvable" as a reported finding rather than a
-silent pass; the guarded line above applies that same honesty automatically,
-on every verify run, instead of waiting for an audit to notice it.
+### Design-gate resolver fragment
+
+The fragment below is shown as a code block, not inside the table above, on
+purpose: it is long enough, and contains enough literal `|` characters (inside
+`||`), that a Markdown table cell would force a choice between two bad
+outcomes — leave the pipes unescaped and GitHub's own table renderer silently
+truncates the cell at the first one (confirmed against the real
+`api.github.com/markdown` GFM endpoint before writing this down), or
+backslash-escape them for the renderer's sake and hand every future
+`/project-init` run a copy contaminated with literal backslashes it would
+paste straight into a real project's shell script. A fenced code block has
+neither failure mode: nothing here needs escaping, so the copy any agent
+reads is byte-identical to the copy that runs.
+
+```sh
+&& { if [ -n "${CLAUDE_PLUGIN_ROOT:-}" ]; then node "${CLAUDE_PLUGIN_ROOT}/kit/scripts/accuracy_report.mjs"; else R="$(node -e 'const fs=require("fs"),p=require("path"),os=require("os");let r="";try{const c=process.env.CLAUDE_CONFIG_DIR||p.join(os.homedir(),".claude");const j=JSON.parse(fs.readFileSync(p.join(c,"plugins","installed_plugins.json"),"utf8"));const nm=Object.keys(j.plugins||{}).find(nm=>nm.startsWith("dev-kit@"));const es=nm?j.plugins[nm]:[];const e=es.find(x=>x.scope==="user")||es[0];if(e&&e.installPath)r=e.installPath}catch(e){}process.stdout.write(r)' 2>/dev/null)"; if [ -n "$R" ] && [ -f "$R/kit/scripts/accuracy_report.mjs" ]; then node "$R/kit/scripts/accuracy_report.mjs"; else echo "design gate: SKIPPED — dev-kit plugin not found (no CLAUDE_PLUGIN_ROOT, and no dev-kit@* entry with a valid kit/ in installed_plugins.json); a skipped gate is not a passed gate"; fi; fi; }
+```
+
+One line, no exceptions — it is appended after `&&` into a single shell
+command in `CLAUDE.md`'s fenced block, a `package.json`/`Makefile` verify
+target, and `templates/scaffold/verify.yml.tmpl`'s `run:` step alike, and a
+line break anywhere in the middle would break the `node -e` argument.
+(`templates/scaffold/verify.yml.tmpl`'s `Verify` step renders `{{VERIFY}}`
+inside a `run: |` block scalar, not a bare `run: {{VERIFY}}` line, precisely
+so this fragment's embedded `echo "…: …"` text — which contains a `: ` that
+a YAML plain scalar cannot safely carry — survives the substitution; confirmed
+both ways with `yaml.safe_load` before making that change.)
+
+**Why this resolves the plugin's location itself, instead of trusting `${CLAUDE_PLUGIN_ROOT}` as a shell variable.** An earlier version of this row read `[ -z "${CLAUDE_PLUGIN_ROOT:-}" ]` as a proxy for "no Claude Code session." It is not one: `${CLAUDE_PLUGIN_ROOT}` is not an environment variable Claude Code exports to subprocesses. It is resolved by **text substitution scoped to the plugin's own `hooks/hooks.json`** (`docs/acceptance/2026-08-12-a18-plugin-declared-hooks.md`; `docs/BACKLOG.md` calls it "plugin-hook-only") — it does not reach a project's `.claude/settings.json`, and it is not set for an ordinary Bash tool call, a `verify` script, or a CI runner. Confirmed empirically: in a plain Claude Code Bash tool call, both `CLAUDE_PLUGIN_ROOT` and `CLAUDE_PROJECT_DIR` are unset. A guard reading it that way is therefore true in the exact case it exists to serve, and the gate never fires — every other working use of this variable anywhere in this plugin is prose an agent reads and retypes, never shell expansion, and this row cannot be the one exception.
+
+The row now resolves the root itself, in order:
+
+1. **`$CLAUDE_PLUGIN_ROOT`, if already set** — genuinely correct exactly where Claude Code performs the substitution above: inside a plugin-declared `hooks/hooks.json` command, or a shell where a human has manually exported it. Trusted without a pre-check: if it is set but wrong, `node` fails loudly (`Cannot find module …`) rather than being silently downgraded to `SKIPPED` — a deliberately-or-accidentally wrong override is a real error, not a routine absence, and should say so.
+2. **Otherwise, `~/.claude/plugins/installed_plugins.json`** (or `$CLAUDE_CONFIG_DIR/plugins/installed_plugins.json`, the same override `claude` itself honors). This is Claude Code's own installed-plugin registry, keyed `<plugin>@<marketplace>`; each entry carries `installPath` and `version` — inspected directly against a real install before relying on the shape. The fragment takes the first key starting `dev-kit@`, prefers the entry with `"scope": "user"`, and reads `installPath`. **This is the path that actually matters**: it is what resolves in a plain `bash verify.sh` or `npm run verify`, and therefore in `ship-it` step 1 — none of which are a plugin-declared hook, all of which are real invocations of this exact command, in an ordinary shell with no Claude-specific environment at all.
+3. **Neither resolves** — the registry file is absent, unparsable, has no `dev-kit@*` entry, or its recorded `installPath` no longer contains a `kit/scripts/accuracy_report.mjs` (a stale entry from a moved or uninstalled plugin): print `design gate: SKIPPED — …` naming the reason, and exit 0. The line says outright that a skipped gate is not a passed gate; it must not fail the whole verify command over a precondition this project does not control — a project whose plugin was uninstalled should still be able to run its other checks.
+
+**Why this resolution logic is copied into every scaffolded project's verify command, rather than shipped once as a plugin script.** This fragment's entire job is to find the plugin *before* anything is known about where it is. A script that solved that by living at `${CLAUDE_PLUGIN_ROOT}/kit/scripts/some-resolver.mjs` would need `${CLAUDE_PLUGIN_ROOT}` already resolved just to be invoked — exactly the value branch 2 above exists to produce when it isn't. Shipping the resolver does not remove the bootstrap step; it relocates the same "where is the plugin" problem one level down and adds a call site that fails the same way for the same reason. Only the part that runs *after* the root is known — `accuracy_report.mjs` itself — safely delegates to a shipped, centrally-fixable script, in both branches above. The resolution logic stays deliberately small (one `node -e`, no dependency beyond `node`, already assumed by every design-gate invocation in this table) precisely because it is the one part that cannot be centralized: a future fix to it reaches already-scaffolded projects the way any other templated fragment does, through `framework-upgrade`, not through a plugin version bump alone. That cost is real and is accepted with the choice, not hidden by it.
+
+**Why `templates/github/gates.yml` still gets no design job.** `accuracy_report.mjs` (what `/gate` runs) is the *plugin's* own self-check: every one of its checks runs against its own bundled `kit/` tokens and example harnesses — its `KIT_ROOT` constant is hardcoded to its own directory, never to this project's `design-tokens.json` or `src/components/`. A bare GitHub Actions runner satisfies neither resolution branch above — it has no live Claude Code session to set `$CLAUDE_PLUGIN_ROOT`, and no local `~/.claude/plugins/installed_plugins.json` either, since the CLI was never installed there. Both paths correctly land on the same honest `SKIPPED`, which is exactly why an unguarded command would have been worse than useless: byte-identical in `CLAUDE.md`, the `verify` script, and the CI workflow (Step 10 renders `{{VERIFY}}` from the same command Step 9 wrote), yet silently broken in CI on every PR, forever. `templates/github/gates.yml` gets no matching design job for the same reason one level up: making one work for real would mean vendoring `kit/`'s scripts, tokens, and example harnesses, plus a Playwright/Chromium install, into every scaffolded project's CI checkout — reviving the copy-the-engine-into-every-project model duplicate review #1 retired for this merge (see the merge design doc). `skills/project-audit/SKILL.md` § *Design* already treats "Playwright unresolvable" as a reported finding rather than a silent pass; the guarded line above applies that same honesty automatically, on every verify run, instead of waiting for an audit to notice it.
 
 ## Toolchain pins
 
