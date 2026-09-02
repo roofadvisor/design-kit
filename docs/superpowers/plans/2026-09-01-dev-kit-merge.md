@@ -1227,7 +1227,11 @@ whole set:
 grep -rn '`templates/' skills/ | grep -v 'CLAUDE_PLUGIN_ROOT'
 ```
 
-Every hit is a path that breaks in a scaffolded project.
+Every hit is a path that breaks in a scaffolded project. Task 11's review
+found one more of the same shape: `skills/project-audit/SKILL.md:121` cites
+`skills/project-init/references/module-catalog.md` unprefixed — the only
+cross-skill reference-doc path in the plugin without one, while every script
+path in the same bullet list has it. Include reference docs, not just scripts.
 
 - [ ] **Step 4a: Stop `check_log_hygiene` firing on design tokens**
 
