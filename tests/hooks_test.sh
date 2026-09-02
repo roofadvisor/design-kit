@@ -174,6 +174,23 @@ check "allows the npm lifecycle var"       0 guard.sh '{"tool_input":{"command":
 check "allows the sk-SK locale"            0 guard.sh '{"tool_input":{"command":"npx vite build --locale sk-SK"}}'
 check "blocks a real openai key shape"     2 guard.sh '{"tool_input":{"command":"openai --key sk-abcdefghijkl1234567890"}}'
 
+# Found by running /project-audit against a real repo — the guard blocked the
+# audit twice on read-only work.
+#
+# 1. The key-material arm matched `.key` as a bare substring, so `list(d.keys())`
+#    denied as "key material is off-limits". Dictionary access is not a secret.
+#    The discriminator is what FOLLOWS: a real key file ends there or hits a
+#    separator, while `.keys()` continues into an identifier.
+check "allows .keys() dict access"         0 guard.sh '{"tool_input":{"command":"python3 -c \"print(list(d.keys()))\""}}'
+check "allows a .keyboard property"        0 guard.sh '{"tool_input":{"command":"echo $cfg.keyboard.layout"}}'
+check "still blocks a real .key file"      2 guard.sh '{"tool_input":{"command":"cat server.key"}}'
+check "still blocks .key mid-command"      2 guard.sh '{"tool_input":{"command":"cat tls.key && echo done"}}'
+# 2. Shell control flow was not in the dotenv allowlist, so a loop that only
+#    read .gitignore denied because the word .env appeared in it as a pattern.
+check "allows a for loop over safe verbs"  0 guard.sh '{"tool_input":{"command":"for p in a b; do grep -c KEY .env; done"}}'
+check "allows an if guard"                 0 guard.sh '{"tool_input":{"command":"if test -f .env; then echo yes; fi"}}'
+check "control flow does not launder cat"  2 guard.sh '{"tool_input":{"command":"for p in a; do cat .env; done"}}'
+
 # Key material keeps its old behaviour: any mention denies.
 check "blocks any id_rsa mention"          2 guard.sh '{"tool_input":{"command":"ls -la ~/.ssh/id_rsa"}}'
 check "blocks any .pem mention"            2 guard.sh '{"tool_input":{"command":"test -f cert.pem"}}'

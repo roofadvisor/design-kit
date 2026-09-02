@@ -118,10 +118,31 @@ if [ -n "$envref" ]; then
     while IFS= read -r seg; do
       seg=${seg#"${seg%%[![:space:]]*}"}          # ltrim
       [ -z "$seg" ] && continue
+      # Strip leading control-flow keywords rather than allowing them. Splitting
+      # on `;` yields `do cat .env`, whose first word is `do` — so treating `do`
+      # as safe would wave the `cat` straight through. Measured: it did, until
+      # this loop was added. Keywords are transparent, not permitted.
+      while :; do
+        w=${seg%%[[:space:]]*}
+        case "$w" in
+          # A loop or case HEADER runs no command — `for p in a b` is a variable
+          # and a word list, so stripping the keyword would leave `p` as the
+          # "verb". The whole segment is transparent.
+          for|case) seg=""; break ;;
+          # These PRECEDE a command on the same segment: strip and judge what
+          # follows. `do cat .env` must be judged on the cat.
+          do|done|then|else|elif|fi|esac|if|while|until|'{'|'}')
+              rest=${seg#"$w"}; rest=${rest#"${rest%%[![:space:]]*}"}
+              [ -z "$rest" ] && { seg=""; break; }
+              seg=$rest ;;
+          *)  break ;;
+        esac
+      done
+      [ -z "$seg" ] && continue                   # segment was only keywords
       verb=${seg%%[[:space:]]*}; verb=${verb##*/}  # first word, path stripped
       case "$verb" in
         # Existence, metadata, shape. Emit nothing from inside the file.
-        test|[|[[|ls|wc|stat|file|du|touch|true|:|cd|echo|printf|mkdir|chmod) ;;
+        test|'['|'[['|ls|wc|stat|file|du|touch|true|:|cd|echo|printf|mkdir|chmod) ;;
         # Copy and move: bytes go somewhere, nothing is printed. Restricted to a
         # dotenv-shaped destination, so `cp .env docs/notes.txt` — which stages a
         # secret for a later read or a commit — is not quietly safe.
@@ -185,7 +206,12 @@ case "$scrubbed" in
   # It is also rare in ordinary work, so the strictness costs nothing.
   *"id_rsa"*|*".pem"*|*"credentials.json"*)
       deny "C-01" "key material is off-limits. Reference it by path in config; never read it into a transcript." ;;
-  *"keystore"*|*"mnemonic"*|*"seed phrase"*|*".key"*)
+  # `.key` anchored on what FOLLOWS it, the mirror of the `.env` anchor above.
+  # Unanchored it denied `list(d.keys())` and `$cfg.keyboard` — dictionary access
+  # and a property name, neither of them secrets. A real key file ends at the
+  # extension or hits a separator; an identifier keeps going. Found when this
+  # guard blocked a /project-audit run twice on read-only work.
+  *"keystore"*|*"mnemonic"*|*"seed phrase"*|*".key"|*".key"[!A-Za-z0-9_]*)
       deny "C-01" "key material is off-limits." ;;
   *"PRIVATE_KEY"*|*"SECRET_KEY"*|*"_TOKEN="*|*"API_KEY="*)
       deny "C-01" "never interpolate a credential into a command. Reference the env var by name." ;;
