@@ -945,7 +945,21 @@ git commit -m "feat: audit and upgrade paths understand design bundles"
 bash scripts/verify.sh
 ```
 
-Expected: exit 0. Any failure is fixed in its owning task, never suppressed here.
+Expected: **every gate clean**, and exactly one known failure — `hooks_test.sh`'s
+`GREEN: expected a subdir/pkg/deep telemetry line` case. Confirm that is the only
+one; any other failure is fixed in its owning task, never suppressed here.
+
+That single case is inherited, not ours: it fails identically in the upstream
+`f4d-dev-env-configurator` checkout (verified 2026-09-02), and it is an artifact of
+macOS `mktemp -d` returning a path under `/var/folders/...` where `/var` is a symlink
+to `/private/var`, so the test's relative-path computation produces
+`f3='var/folders/…'` instead of the expected `deep`. It is a test-environment bug, not
+a product defect.
+
+Record it in the release notes rather than pretending `verify.sh` is green. A command
+that cannot pass on the maintainer's own platform is the exact thing this framework's
+registry calls a gate that fires wrongly — but fixing an upstream test is not this
+merge's job, and silently accepting a red verify is worse than naming it.
 
 - [ ] **Step 2: Clean-room install from the renamed repo**
 
