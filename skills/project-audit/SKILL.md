@@ -116,7 +116,18 @@ checks below — they are available immediately.
 - Any `stateless-ok` annotation without a reason after it
 - Every `stateless-ok import-time registration` annotation: **re-verify the claim** — re-grep the register function's call sites; any non-top-level or handler-reachable call site (including a lazy/dynamic import of the registering module) invalidates the annotation. Report it; never trust an annotation whose evidence no longer holds. This re-verification is the audit's job, not the user's.
 
-**Design** — only meaningful when `.claude/.framework-state.json` declares a design bundle
+**Design** — only meaningful when the project has design capability. Check
+**both** signals, either is sufficient — do not gate on the declaration
+alone: `.claude/.framework-state.json` declares a design bundle (`bundles`
+non-empty — the `/project-init` interview path), **or** any of
+`design-tokens.md` / `design-a11y.md` / `design-components.md` /
+`design-handoff.md` exists in `.claude/rules/` (the migration path —
+`framework-upgrade`'s named `frontend` → design-modules migration copies
+these modules in without ever recording `bundles`; `grep -c bundles
+skills/framework-upgrade/SKILL.md` returns 0). Gating on the declaration
+alone would silently skip this entire section — including the finding that
+would catch a bundle's gate never having been wired — on every repo that
+took the migration path instead of a fresh `/project-init`.
 - **Design bundles declared but unwired.** Not every bundle adds a module —
   `design.content`, `design.direction`, and `design.govern` resolve to none by
   design (`${CLAUDE_PLUGIN_ROOT}/skills/project-init/references/module-catalog.md` § *Design

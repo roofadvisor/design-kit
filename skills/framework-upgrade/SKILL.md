@@ -65,6 +65,15 @@ that entry with the matching `design-*` ids and copy the modules in. Do not map
 `frontend` to all four silently — it was six bullets, and the four modules
 assert far more than it did.
 
+This migration does not, and does not need to, write `bundles` into
+`.claude/.framework-state.json` — that field is `/project-init`'s own record
+of the interview's raw Round 3 answer, and this path never runs that
+interview. `/project-audit`'s Design section does not depend on it either: it
+gates on `bundles` being non-empty **or** any `design-*` module existing in
+`.claude/rules/`, so a project that arrived here via this migration is
+audited correctly from the modules this step just copied in, with no
+declaration step to remember or skip.
+
 ## After applying
 
 1. Run the project verify command. An upgrade that breaks verify is not done.
