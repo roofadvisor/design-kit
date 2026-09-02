@@ -22,6 +22,16 @@ esac
 root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
 mkdir -p "$root/.claude" 2>/dev/null
 touch "$root/.claude/.last-verify"
-printf '%s\tverify\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(printf '%s' "$cmd" | cut -c1-60)" \
+# First line only, then truncate, then flatten tabs. `cut -c1-60` operates PER
+# LINE: given a multi-line command — any `git commit` carrying a heredoc message
+# — it emitted one log line per input line, every line after the first a bare
+# fragment with no timestamp and no fields. Measured on the kit's own log before
+# this fix: 941 of 1036 lines, 91%, were that garbage. /retro and /project-audit
+# read this file, so their entire history here was mostly commit prose.
+# Tabs are squeezed for the same reason at the field level rather than the line
+# level: this is a TSV, and a command containing one silently shifts every
+# column after it.
+summary=$(printf '%s' "$cmd" | head -1 | cut -c1-60 | tr '\t' ' ')
+printf '%s\tverify\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$summary" \
   >> "$root/.claude/.session-log" 2>/dev/null
 exit 0

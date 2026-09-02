@@ -472,6 +472,19 @@ echo '{"tool_input":{"command":"ls -la"}}' | (cd "$vr2" && bash "$HOOKS/verify-r
 if [ ! -f "$vr2/.claude/.last-verify" ]; then echo "  PASS  ignores unrelated commands"; pass=$((pass+1))
 else echo "  FAIL  ignores unrelated commands"; fail=$((fail+1)); fi
 
+# One command, one telemetry line. `cut -c1-60` truncates PER LINE, so a
+# multi-line command -- any `git commit` carrying a heredoc message -- emitted
+# one log line per input line, and every line after the first was a bare
+# fragment with no timestamp and no fields. Measured on the kit's own log
+# before this fix: 941 of 1036 lines (91%) were that garbage, which is what
+# /retro and /project-audit were reading.
+vr3=$(mktemp -d); ( cd "$vr3" && git init -q ); mkstate "$vr3"
+printf '{"tool_input":{"command":"npm test -- --reporter=x\\nfix: a commit subject\\n\\nA body paragraph that keeps going.\\nAnd another line."}}' \
+  | (cd "$vr3" && bash "$HOOKS/verify-record.sh" >/dev/null 2>&1)
+vr3n=$(wc -l < "$vr3/.claude/.session-log" 2>/dev/null | tr -d ' ')
+if [ "$vr3n" = "1" ]; then echo "  PASS  a multi-line command writes exactly one telemetry line"; pass=$((pass+1))
+else echo "  FAIL  a multi-line command writes exactly one telemetry line (got $vr3n)"; fail=$((fail+1)); fi
+
 # /gate must count as a verify run. accuracy_report.mjs matches none of the
 # patterns above, and its child gates run via execSync, which
 # PostToolUse:Bash never observes -- so running /gate leaves .last-verify
