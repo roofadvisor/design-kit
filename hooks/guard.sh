@@ -86,27 +86,99 @@ case "$scrubbed" in
   ".env"*|*[!A-Za-z0-9_]".env"*) envref=1 ;;
 esac
 if [ -n "$envref" ]; then
-  # A file-targeting tool gives no verb to judge. Read dumps the file outright
-  # and an Edit payload carries its content, so a bare path stays strict.
-  [ -n "$via_path" ] && deny "C-01" "opening that file would put its values in this transcript. Reference a value as \$VAR, or work on the .example variant."
-  padded=" $scrubbed"
-  reader=""
-  for v in cat less more head tail bat xxd od strings nl open; do
-    case "$padded" in *[!A-Za-z0-9_-]"$v "*) reader=$v; break ;; esac
-  done
-  # grep prints matching lines — and matching lines are values — unless it was
-  # asked for a count, a verdict, or filenames only.
-  if [ -z "$reader" ]; then
-    case "$padded" in
-      *[!A-Za-z0-9_-]grep\ *|*[!A-Za-z0-9_-]egrep\ *|*[!A-Za-z0-9_-]rg\ *)
-          case "$padded" in
-            *" -c"*|*" -q"*|*" -l"*|*" -L"*|*--count*|*--quiet*|*--files-with-matches*) ;;
-            *) reader="grep" ;;
-          esac ;;
-    esac
+  # ALLOWLIST, not a denylist. A previous revision listed the verbs that print a
+  # file — cat, head, less and eight others — and allowed everything else. An
+  # adversarial review measured that against the filename rule it replaced: 65
+  # commands the old rule denied were newly allowed, only 4 of them intended.
+  # The other 61 were working leaks — awk, sed -n, python3 -c, base64,
+  # `source .env && env`, `docker run --env-file`, `curl -d @.env`, `scp`, and
+  # `tac`, which is cat spelled backwards. That last one is the argument: if a
+  # verb list loses to reversing a word, the list was never the mechanism.
+  # "Which programs print a file" has no finite answer; "which operations on a
+  # secrets file are safe" has a short one, so enumerate that instead and deny
+  # by default.
+  #
+  # Safe means the command emits no value and moves none anywhere readable.
+  # Every segment of the command must be safe — one unsafe segment condemns the
+  # whole line, because `test -f .env && cat .env` is not a safe command.
+  safe=1
+
+  # Constructs that can smuggle a read past any verb check at all. Command
+  # substitution, eval, xargs and a redirect FROM the file all execute or emit
+  # something this parser cannot see.
+  case "$scrubbed" in
+    *'$('*|*'`'*|*eval*|*xargs*|*'<'*) safe="" ;;
+  esac
+
+  if [ -n "$safe" ]; then
+    # Split on the separators that start a new command, then require every
+    # segment's leading verb to be one we have reasoned about.
+    seps=${scrubbed//&&/$'\n'}; seps=${seps//||/$'\n'}
+    seps=${seps//;/$'\n'};      seps=${seps//|/$'\n'}
+    while IFS= read -r seg; do
+      seg=${seg#"${seg%%[![:space:]]*}"}          # ltrim
+      [ -z "$seg" ] && continue
+      verb=${seg%%[[:space:]]*}; verb=${verb##*/}  # first word, path stripped
+      case "$verb" in
+        # Existence, metadata, shape. Emit nothing from inside the file.
+        test|[|[[|ls|wc|stat|file|du|touch|true|:|cd|echo|printf|mkdir|chmod) ;;
+        # Copy and move: bytes go somewhere, nothing is printed. Restricted to a
+        # dotenv-shaped destination, so `cp .env docs/notes.txt` — which stages a
+        # secret for a later read or a commit — is not quietly safe.
+        cp|mv) dest=${seg##* }                       # last word is the destination
+               case "$dest" in *.env|*.env.*|*.envrc) ;; *) safe="" ;; esac ;;
+        # In-place only. Without -i, sed prints.
+        sed) case "$seg" in *" -i"*) ;; *) safe="" ;; esac ;;
+        # Counts, verdicts and filenames only. -C is CONTEXT and prints matches;
+        # nocasematch would have folded it into -c, so match case-sensitively.
+        grep|egrep|rg)
+            case "$seg" in
+              *" -c "*|*" -q "*|*" -l "*|*" -L "*|*--count*|*--quiet*|*--files-with-matches*) ;;
+              *) safe="" ;;
+            esac ;;
+        # Key names only. -f2 is every value, -c is a character range over the
+        # whole line: the previous deny message recommended `cut -d= -f1` while
+        # allowing both of those.
+        cut) case "$seg" in *"-f1"*|*"-f 1"*) ;; *) safe="" ;; esac ;;
+        *) safe="" ;;
+      esac
+      [ -z "$safe" ] && break
+    done <<< "$seps"
   fi
-  [ -n "$reader" ] && deny "C-01" "\`$reader\` would print that file's values into this transcript. Reference a value as \$VAR, list key names with \`cut -d= -f1\`, or test presence with \`grep -c\`."
+
+  # A file-targeting tool gives no verb to judge at all. Read dumps the file
+  # outright and an Edit payload carries its content, so a bare path is never
+  # safe. This branch survived the review's bypass attempts intact.
+  [ -n "$via_path" ] && safe=""
+
+  [ -z "$safe" ] && deny "C-01" "that would expose the file's values — printing them here, or copying them somewhere they can be read or committed. Safe: test -f, ls, wc, stat, cut -d= -f1 for key names, grep -c/-q/-l, sed -i, and cp/mv to a .env* name. Reference a value as \$VAR."
 fi
+
+# Credential literals by issuer shape. The named-assignment arm below only
+# catches a value assigned to a recognisably-named variable, so a bare
+# `printf sk-live-… > file` walks past it — a literal secret in the command
+# text, which this transcript then keeps.
+#
+# A regex, not a glob, because the discriminator is "followed by a long token":
+# `sk-SK` is a locale and `$npm_package_version` is in every package.json
+# script, while `sk-<40 chars>` and `AKIA<16>` are keys. An earlier glob version
+# denied both of those false positives, the npm one in every repo the plugin is
+# installed in.
+#
+# nocasematch is off for this test on purpose: the AWS prefixes are uppercase by
+# definition, and folding case would deny the word "asia".
+#
+# Known limit, stated rather than implied: this catches KNOWN ISSUERS ONLY. A
+# bare hex token, a JWT, or a `postgres://user:pass@host` URL has no prefix to
+# match and passes. Entropy scoring would reach those; it is deliberately not
+# here, because a hook must stay fast and dependency-free, and a scorer tuned
+# loose enough to catch them flags every UUID and content hash.
+shopt -u nocasematch
+if [[ "$scrubbed" =~ (^|[^A-Za-z0-9_])(sk-[A-Za-z0-9]{12,}|sk-proj-|sk-live-|sk-test-|sk_live_|sk_test_|rk_live_|pk_live_|ghp_[A-Za-z0-9]{8,}|gho_[A-Za-z0-9]{8,}|ghs_[A-Za-z0-9]{8,}|ghu_[A-Za-z0-9]{8,}|github_pat_|glpat-[A-Za-z0-9_-]{12,}|xox[baprs]-[A-Za-z0-9-]{10,}|AKIA[A-Z0-9]{12,}|ASIA[A-Z0-9]{12,}|shpat_[a-f0-9]{16,}|hf_[A-Za-z0-9]{20,}|-----BEGIN[ A-Z]*PRIVATE\ KEY) ]]; then
+  shopt -s nocasematch
+  deny "C-01" "that is a credential literal sitting in the command text, where this transcript keeps it. Put the value in your shell or a dotenv file and reference it as \$VAR."
+fi
+shopt -s nocasematch
 
 case "$scrubbed" in
   # Key material, unlike a dotenv file, has no safe read: any mention denies.
@@ -117,17 +189,9 @@ case "$scrubbed" in
       deny "C-01" "key material is off-limits." ;;
   *"PRIVATE_KEY"*|*"SECRET_KEY"*|*"_TOKEN="*|*"API_KEY="*)
       deny "C-01" "never interpolate a credential into a command. Reference the env var by name." ;;
-  # Credential literals by issuer shape. The arm above only catches a value
-  # assigned to a recognisably-named variable, so `printf sk-live-ABC123 > .env`
-  # walked straight past it — a literal secret in the command text, which is the
-  # leak this rule exists to stop. Known prefixes rather than entropy scoring:
-  # the same rule-first approach gitleaks takes, and it needs no math in a hook.
-  # Short prefixes are anchored so `task-`, `--disk-usage` and `risk-` do not match.
-  *[!A-Za-z0-9_]"sk-"*|*[!A-Za-z0-9_]"sk_live"*|*[!A-Za-z0-9_]"pk_live"*|\
-  *"ghp_"*|*"gho_"*|*"ghs_"*|*"github_pat_"*|*"xoxb-"*|*"xoxp-"*|*"xapp-"*|\
-  *"AKIA"[A-Z0-9][A-Z0-9][A-Z0-9]*|*"ASIA"[A-Z0-9][A-Z0-9][A-Z0-9]*|\
-  *"-----BEGIN "*|*"glpat-"*|*"npm_"*)
-      deny "C-01" "that is a credential literal sitting in the command text, where this transcript keeps it. Put the value in your shell or a dotenv file and reference it as \$VAR." ;;
+  # (Credential literals by issuer shape are matched below, with a regex —
+  #  glob patterns cannot express "followed by a long token", which is what
+  #  separates a real key from a word that merely starts the same way.)
   # The flag itself, terminal or followed by whitespace — not every flag that
   # merely starts with it (`--broadcast-mode=off` broadcasts nothing).
   *"--broadcast"|*"--broadcast"[[:space:]]*)
