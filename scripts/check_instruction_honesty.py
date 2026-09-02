@@ -28,7 +28,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 RENDER = os.path.join(HERE, "render_instructions.py")
-BASE_TARGETS = ["CLAUDE.md", "AGENTS.md", ".cursor/rules/f4d-kit.mdc"]
+BASE_TARGETS = ["CLAUDE.md", "AGENTS.md", ".cursor/rules/dev-kit.mdc"]
 
 
 def die(msg):

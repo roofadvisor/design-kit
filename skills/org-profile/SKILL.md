@@ -75,6 +75,6 @@ Save to `~/.claude/f4d/orgs/<slug>.yml`. Confirm the path. Never write credentia
 - Proposes stack defaults instead of asking, so the user confirms rather than composes
 - Applies conventions automatically — webhook prefix, scopes, env prefix
 - Copies the `constraints` block into the project's `.claude/rules/org.md` verbatim, so every session in every repo of that company sees them
-- Still asks the per-project questions: what this project does, its integrations, and whether it needs storage, money, blockchain, or frontend modules
+- Still asks the per-project questions: what this project does, its integrations, and whether it needs storage, money, blockchain, or the design modules (tokens, a11y, components, handoff)
 
 **Nothing in a profile is a per-project answer.** If a fact varies between two projects in the same company, it belongs in the project interview, not here.

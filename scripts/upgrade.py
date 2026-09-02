@@ -174,7 +174,7 @@ def manifest_report(base, plugin, state):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--plugin", required=True, help="path to the f4d-kit plugin")
+    ap.add_argument("--plugin", required=True, help="path to the dev-kit plugin")
     ap.add_argument("--apply", action="store_true", help="write FRAMEWORK and NEW changes")
     ap.add_argument("--accept-new", action="store_true", help="also install NEW files")
     args = ap.parse_args()

@@ -6,6 +6,7 @@ _Rules index — generated from the rule-module frontmatter. Do not edit between
 **Always applies (every task):**
 - `core` — Core
 - `guards` — Guards, Not Memos
+- `response-format` — Response format
 - `silent-degradation` — Silent Degradation
 
 **Load the file when working in the area:**
@@ -16,8 +17,11 @@ _Rules index — generated from the rule-module frontmatter. Do not edit between
 - `data-integration` — Data Integration
 - `database` — Database
 - `dataprotection` — Data Protection
+- `design-a11y` — Design accessibility
+- `design-components` — Design components
+- `design-handoff` — Design handoff
+- `design-tokens` — Design tokens
 - `determinism` — Determinism & Content Addressing
-- `frontend` — Frontend
 - `keysafety` — Key Safety
 - `livesystem` — Live System
 - `money` — Money

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# f4d-kit PreToolUse guard. Exit 2 = hard block, stderr returned to Claude.
+# dev-kit PreToolUse guard. Exit 2 = hard block, stderr returned to Claude.
 set -uo pipefail
 . "$(dirname "${BASH_SOURCE[0]}")/_parse.sh"
 hook_opted_in || exit 0
@@ -24,7 +24,7 @@ fi
 # deny <rule-id> <message>. If a deny ever needs the id UNREGISTERED, that is
 # a registry-honesty gap: give the rule a row (IDs are permanent, A9) before
 # shipping the deny — the fire report flags UNREGISTERED loudly for a reason.
-deny() { log_deny "$1" "$cmd"; echo "BLOCKED by f4d-kit [$1]: $2" >&2; exit 2; }
+deny() { log_deny "$1" "$cmd"; echo "BLOCKED by dev-kit [$1]: $2" >&2; exit 2; }
 
 shopt -s nocasematch
 

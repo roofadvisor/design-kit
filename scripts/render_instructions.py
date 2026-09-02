@@ -39,7 +39,7 @@ END = "<!-- END f4d-kit:rules -->"
 BLOCK_RE = re.compile(re.escape(BEGIN) + r".*?" + re.escape(END), re.DOTALL)
 TOKEN = "{{RULES_INDEX}}"
 NOT_MODULES = {"REGISTRY.md", "org.md"}  # rendered/verbatim files, never rule modules
-DEFAULT_TARGETS = ["CLAUDE.md", "AGENTS.md", ".cursor/rules/f4d-kit.mdc"]
+DEFAULT_TARGETS = ["CLAUDE.md", "AGENTS.md", ".cursor/rules/dev-kit.mdc"]
 
 
 def die(msg):

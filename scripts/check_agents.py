@@ -24,12 +24,12 @@ hooks.
 
 NOT a CI gate, for the same reason check_companions.py is not one: whether an
 agent file belongs here is a function of whether this repo has adopted
-f4d-kit **as a consumer**, which needs two signals together, not one:
+dev-kit **as a consumer**, which needs two signals together, not one:
 `.claude/.framework-state.json` present AND `.claude/rules/` present. Neither
 alone is sufficient — `.claude/rules/` alone false-positives on repos using
 Claude Code's own native rules feature for unrelated content (review comment
 r3771422153 on PR #34); `.claude/.framework-state.json` alone false-positives
-on f4d-kit's own repo, which carries that file for a different reason (A18
+on dev-kit's own repo, which carries that file for a different reason (A18
 self-opt-in) but has no `.claude/rules/` of its own — it is the plugin
 *source*, not a consumer (found 2026-08-13, by running this script against
 this repo, not by inspection). A repo that never adopted the kit as a
@@ -95,7 +95,7 @@ def main():
     # Code's native rules feature lets any repo hold a .claude/rules/ full of
     # project-local, non-kit content, which the old check mistook for "kit
     # adopted" and then reported real agent files as falsely missing.
-    # .claude/.framework-state.json alone: f4d-kit's own repo carries that
+    # .claude/.framework-state.json alone: dev-kit's own repo carries that
     # file too (A18 self-opts it into its own plugin-declared hooks — a
     # completely different reason than being a scaffolded consumer), and has
     # no .claude/rules/ of its own to derive an expected agent set from — it
@@ -113,7 +113,7 @@ def main():
     # silent skip alongside genuine absence.
     if not os.path.exists(state_path) or not os.path.exists(rules_dir):
         print(f"check_agents: SKIP — no {FRAMEWORK_STATE} and {RULES_DIR}/ together here; "
-              "this repo has not adopted f4d-kit as a consumer.")
+              "this repo has not adopted dev-kit as a consumer.")
         return 0
 
     # G-03: "absent" (fine — zero rules modules held, so only the

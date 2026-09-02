@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-f4d-kit — GitHub → Notion work sync.
+dev-kit — GitHub → Notion work sync.
 
 Runs in GitHub Actions. Pushes engineering state into the company Work DB.
 One direction only: GitHub owns state, Notion owns triage.

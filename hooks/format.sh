@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# f4d-kit PostToolUse formatter. Best-effort, never blocks.
+# dev-kit PostToolUse formatter. Best-effort, never blocks.
 set -uo pipefail
 . "$(dirname "${BASH_SOURCE[0]}")/_parse.sh"
 hook_opted_in || exit 0

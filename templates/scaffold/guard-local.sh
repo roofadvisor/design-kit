@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# f4d-kit FALLBACK guard (A11) — written INTO the repo by /project-init.
+# dev-kit FALLBACK guard (A11) — written INTO the repo by /project-init.
 #
 # Every other guard lives at ${CLAUDE_PLUGIN_ROOT}/... — if the plugin is
 # uninstalled, disabled, or missing on a new machine, those hooks silently

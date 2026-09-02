@@ -65,7 +65,7 @@ Adding is easy; this part is not. For each existing rule ask: *has this earned i
 
 ## Promote
 
-If a rule would help more than one repo, move it into `f4d-kit/templates/rules/`, bump the plugin version, and note which repos should re-pin. This step is what makes the framework compound instead of ossify.
+If a rule would help more than one repo, move it into `dev-kit/templates/rules/`, bump the plugin version, and note which repos should re-pin. This step is what makes the framework compound instead of ossify.
 
 ## Write
 
@@ -76,7 +76,7 @@ Append to `docs/log.md`:
 **Shipped:** <one line>
 **Recurring problems:** <list>
 **Changes made:** <rule/hook/skill added, changed, or removed>
-**Promoted to f4d-kit:** <none, or what and why>
+**Promoted to dev-kit:** <none, or what and why>
 **Watching:** <not yet a pattern, but noticed twice>
 ```
 

@@ -17,14 +17,14 @@ run() { ( cd "$T" && python3 "$KIT/scripts/check_agents.py" >/dev/null 2>&1 ); }
 out() { ( cd "$T" && python3 "$KIT/scripts/check_agents.py" 2>&1 ); }
 
 # SKIP: repo with none of the kit's state at all — no .framework-state.json,
-# no .claude/rules/ — has not adopted f4d-kit. Not a violation.
+# no .claude/rules/ — has not adopted dev-kit. Not a violation.
 rm -rf "$RULES" "$AGENTS"; rm -f "$STATE"
 run; check "no framework-state.json (or rules/) at all skips cleanly" 0 $?
 out | grep -q "SKIP"; check "skip message says SKIP" 0 $?
 
 # RED-then-green regression (review r3771422153, PR #34): a `.claude/rules/`
 # directory's mere existence is not the adoption signal — Claude Code's own
-# native rules feature can populate one on a repo that never touched f4d-kit.
+# native rules feature can populate one on a repo that never touched dev-kit.
 # Before the fix this fell through to a full evaluation and reported the
 # unconditional agent as falsely missing; the fix keys adoption off
 # .claude/.framework-state.json instead, which this repo never wrote.
@@ -35,7 +35,7 @@ run; check "rules/ populated but no framework-state.json still skips" 0 $?
 o=$(out); printf '%s' "$o" | grep -q "SKIP"; check "skip message says SKIP even though rules/ exists" 0 $?
 
 # RED-then-green regression, found by actually running this script against
-# f4d-kit's own repo post-merge (2026-08-13), not by inspection: this repo
+# dev-kit's own repo post-merge (2026-08-13), not by inspection: this repo
 # carries .claude/.framework-state.json (A18 self-opts it into its own
 # plugin-declared hooks, unrelated to being a scaffolded consumer) but has no
 # .claude/rules/ of its own — it is the plugin source, not a target. Before
@@ -44,7 +44,7 @@ o=$(out); printf '%s' "$o" | grep -q "SKIP"; check "skip message says SKIP even 
 # verify-runner.md falsely missing. The fix requires BOTH signals together.
 reset
 rm -rf "$RULES"
-run; check "framework-state.json present but rules/ entirely absent still skips (f4d-kit's own shape)" 0 $?
+run; check "framework-state.json present but rules/ entirely absent still skips (dev-kit's own shape)" 0 $?
 o=$(out); printf '%s' "$o" | grep -q "SKIP"; check "skip message says SKIP for the framework-state-only shape" 0 $?
 
 # G-03 fail-loud must survive the fix above: rules/ present as a plain FILE

@@ -156,7 +156,7 @@ A seed that only contains happy-path rows is worse than none — it teaches Clau
 ```bash
 git init
 git add -A
-git commit -m "chore: project scaffold via f4d-kit"
+git commit -m "chore: project scaffold via dev-kit"
 ```
 
 One commit. Do not split the scaffold across several.

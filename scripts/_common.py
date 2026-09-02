@@ -1,4 +1,4 @@
-"""Shared leaf for f4d-kit check scripts.
+"""Shared leaf for dev-kit check scripts.
 
 Exists because check_guess_lists.py flagged `git rev-parse --show-toplevel`
 duplicated across four scripts. S-05 says extract one dependency-free leaf both

@@ -1,6 +1,6 @@
 ---
 name: framework-upgrade
-description: Move a project from an older f4d-kit version to the current one — diff its .claude/ against the plugin, classify each difference, apply what is safe, and surface conflicts. Use when a repo is behind on plugin version, when /project-audit reports drift, after the framework ships a new version, or when the user says "update the framework", "sync the rules", or "this repo is on an old version".
+description: Move a project from an older dev-kit version to the current one — diff its .claude/ against the plugin, classify each difference, apply what is safe, and surface conflicts. Use when a repo is behind on plugin version, when /project-audit reports drift, after the framework ships a new version, or when the user says "update the framework", "sync the rules", or "this repo is on an old version".
 ---
 
 # Framework Upgrade
@@ -73,7 +73,7 @@ assert far more than it did.
 3. Bump the pinned version and commit it on its own:
    ```bash
    git add .claude
-   git commit -m "chore: upgrade f4d-kit to <version>"
+   git commit -m "chore: upgrade dev-kit to <version>"
    ```
    Its own commit, so a bad upgrade reverts cleanly without taking feature work with it.
 

@@ -86,7 +86,7 @@ it asserts a state that is no longer true.
 If the rule would help more than one repo:
 
 ```bash
-cd <f4d-kit>
+cd <dev-kit>
 # add the rule to templates/rules/<module>.md and REGISTRY.md
 # add the check to scripts/ or hooks/ or templates/tests/
 bash tests/hooks_test.sh          # must pass

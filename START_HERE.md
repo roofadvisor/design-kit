@@ -1,6 +1,6 @@
 # Dev Project Environment — start here
 
-This repo is **f4d-kit**: the reusable development and code product management
+This repo is **dev-kit**: the reusable development and code product management
 framework. It is a Claude Code plugin, installed into every other project repo.
 
 ## First five minutes
@@ -13,19 +13,14 @@ bash bootstrap.sh
 # 1. Confirm the history came through
 git log --oneline
 
-# 2. Confirm everything still passes
-bash tests/hooks_test.sh                      # expect: pass=57 fail=0
-bash tests/render_registry_test.sh            # expect: pass=11 fail=0
-bash tests/gate_trio_test.sh                  # expect: pass=54 fail=0
-bash tests/statelessness_test.sh              # expect: pass=4 fail=0
-bash tests/conformance_test.sh                # expect: pass=48 fail=0
-bash tests/companions_test.sh                 # expect: pass=18 fail=0
-bash tests/scanner_agreement_test.sh          # expect: pass=8 fail=0
-python3 scripts/check_statelessness.py        # expect: clean
-python3 scripts/check_guess_lists.py          # expect: clean
+# 2. Confirm everything still passes — the single verify command (harnesses +
+#    gate scripts); it prints a per-harness pass/fail line and a final
+#    VERIFY PASSED/FAILED verdict, and it stays current as tests are added or
+#    removed, so no fixed count is duplicated here to go stale.
+bash scripts/verify.sh
 
 # 3. Confirm you're on the published remote
-git remote -v   # expect: github.com/f4d/f4d-dev-env-configurator
+git remote -v   # expect: github.com/roofadvisor/dev-kit
 ```
 
 ## Where things are
@@ -53,13 +48,13 @@ files it touches, so it can be picked up without re-deriving anything.
 
 ```bash
 claude plugin marketplace add ./          # from this repo's root; the ./ is required
-claude plugin install f4d-kit@f4d
+claude plugin install dev-kit@roofadvisor
 cd <that-project>
 claude
 # then: /repo-builder   (new)   or   /project-audit  (existing)
 ```
 
-`claude plugin details f4d-kit` prints the component inventory and the per-turn
+`claude plugin details dev-kit` prints the component inventory and the per-turn
 token cost, including the hooks — they are declared once, globally, in
 `hooks/hooks.json` (A18), and each one gates itself on a target repo's
 `.claude/.framework-state.json` before doing anything. `/project-init` writes

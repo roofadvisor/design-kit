@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Red-then-green harness for f4d-kit hooks.
+# Red-then-green harness for dev-kit hooks.
 # A guard that has never been seen to fail is not a guard.
 set -uo pipefail
 HOOKS="$(cd "$(dirname "$0")/../hooks" && pwd)"
@@ -352,7 +352,7 @@ guard_unquoted='${CLAUDE_PROJECT_DIR}/hooks/guard.sh'
 fp_payload='{"tool_input":{"command":"git push --force origin main"}}'
 
 out=$(echo "$fp_payload" | ( cd "$scwd" && CLAUDE_PROJECT_DIR="$spaced" bash -c "$guard_quoted" ) 2>&1); got=$?
-if [ "$got" -eq 2 ] && printf '%s' "$out" | grep -q "BLOCKED by f4d-kit \[C-02\]"; then
+if [ "$got" -eq 2 ] && printf '%s' "$out" | grep -q "BLOCKED by dev-kit \[C-02\]"; then
   echo "  PASS  GREEN: guard.sh still blocks force-push through a spaced project dir"; pass=$((pass+1))
 else
   echo "  FAIL  GREEN: guard.sh should block force-push through a spaced project dir (got exit $got: $out)"; fail=$((fail+1))

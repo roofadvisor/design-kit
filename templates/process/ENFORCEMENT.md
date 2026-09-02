@@ -86,7 +86,7 @@ block.
 
 ## Honest audit of this framework
 
-Most of what f4d-kit ships is prose, and prose is the ignorable layer. Where each
+Most of what dev-kit ships is prose, and prose is the ignorable layer. Where each
 rules module actually sits:
 
 | Module | Mechanically enforceable | Currently enforced by |

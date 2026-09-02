@@ -1,6 +1,6 @@
 ---
 name: project-audit
-description: Audit an existing repo against the f4d-kit framework and report what is missing, drifted, or misconfigured — rules, hooks, verify command, CI, seed quality, adapter coverage. Writes the full report to docs/f4d-audit-<date>.md in the audited repo — findings, proposed changes with benefits and dangers, and a prioritized todo list. Use when the user asks to "rightsize", "audit", "check this repo", "why does Claude keep getting this wrong here", or before adopting an inherited codebase. Also use periodically on projects already scaffolded, to catch drift.
+description: Audit an existing repo against the dev-kit framework and report what is missing, drifted, or misconfigured — rules, hooks, verify command, CI, seed quality, adapter coverage. Writes the full report to docs/dev-audit-<date>.md in the audited repo — findings, proposed changes with benefits and dangers, and a prioritized todo list. Use when the user asks to "rightsize", "audit", "check this repo", "why does Claude keep getting this wrong here", or before adopting an inherited codebase. Also use periodically on projects already scaffolded, to catch drift.
 ---
 
 # Project Audit
@@ -165,7 +165,7 @@ UNNEEDED    (present, project does not need it)
 FINDINGS    (code-level, with file:line)
 ```
 
-Then write the full report as **`docs/f4d-audit-<YYYY-MM-DD>.md`** in the audited
+Then write the full report as **`docs/dev-audit-<YYYY-MM-DD>.md`** in the audited
 repo — on a dedicated branch when the repo has git, never pushed unasked. **This
 document is the only file the audit writes.** Sections, in order:
 

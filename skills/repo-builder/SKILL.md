@@ -93,7 +93,7 @@ Never run `gh secret set`. Never ask for a token value. Never echo one.
 
 ```bash
 git add -A
-git commit -m "chore: scaffold via f4d-kit v<version>"
+git commit -m "chore: scaffold via dev-kit v<version>"
 git push -u origin main
 ```
 
