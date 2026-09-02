@@ -24,6 +24,18 @@ root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
 # extension" (e.g. `[^.]*$`) matches a trailing empty string at the end of
 # ANY line — including "package.json" — so it silently admits everything and
 # defeats the exclusion entirely. Two separate, narrow passes avoid that trap.
+#
+# No `head` cap here. `$changed` is not just a display sample — the staleness
+# loop below reads every line of it to compute `newest`. A shared cap on the
+# two unioned passes starves the second pass whenever the first alone meets
+# it: 20+ changed token files fill a `head -20` before a single ordinary
+# source file from the second pass is ever read, so a source file modified
+# after the verify marker silently never has its mtime examined, and the
+# hook reports done on exactly the change it exists to catch. Reproduced by
+# hand: 25 changed `kit/tokens/*.json` plus one `.ts` file modified after the
+# marker — with a cap, exit 0 (wrong); without one, exit 2. Truncate only the
+# human-facing sample below (already scoped to its own `head -5`), never the
+# list the mtime loop walks.
 changed=$(
   {
     git -C "$root" status --porcelain 2>/dev/null \
@@ -34,7 +46,7 @@ changed=$(
       | sed 's/^...//' \
       | grep -Ev '^(docs|\.github|\.claude)/' \
       | grep -Ev '\.(md|txt|json|ya?ml|lock)$'
-  } | head -20
+  }
 )
 [ -z "$changed" ] && exit 0
 

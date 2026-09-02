@@ -10,7 +10,12 @@ cmd=$(hook_field "$input" "command")
 
 case "$cmd" in
   *verify*|*"pytest"*|*"vitest"*|*"forge test"*|*"npm test"*|*"pnpm test"*) ;;
-  *accuracy_report*|*"/gate"*) ;;
+  # /gate's real invocation (commands/gate.md) is `node .../accuracy_report.mjs`,
+  # already covered by *accuracy_report* alone. A separate *"/gate"* arm was
+  # tried here and dropped: it matches the substring anywhere, so reading the
+  # command's own doc (`cat commands/gate.md`) or touching a `gateway/` path
+  # falsely records a verify that never ran. No coverage is lost by dropping it.
+  *accuracy_report*) ;;
   *) exit 0 ;;
 esac
 

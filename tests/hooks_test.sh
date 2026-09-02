@@ -425,6 +425,28 @@ pkg=$(mktemp -d); ( cd "$pkg" && git init -q && echo '{}' > package.json && git 
 if [ "$got" -eq 0 ]; then echo "  PASS  ignores package.json-only changes"; pass=$((pass+1))
 else echo "  FAIL  ignores package.json-only changes (got $got)"; fail=$((fail+1)); fi
 
+# fix-round-1 CRITICAL: the two-pass union shared one `head -20` cap. When the
+# first pass (token paths) alone has 20+ matches, it fills the cap before the
+# second pass's ordinary source files are ever read into $changed -- and
+# $changed is what the staleness loop below walks, not just a display sample.
+# Reproduced with 25 changed kit/tokens/*.json, all made OLDER than the verify
+# marker (so none of them alone would trip staleness), plus one ordinary
+# source file made NEWER than the marker after it was set -- the exact
+# "source changed after last verify" case. Pre-fix: exit 0 (wrong, because
+# app.ts's line never survived the cap). Post-fix: exit 2.
+tok=$(mktemp -d)
+( cd "$tok" && git init -q && git config user.email t@t && git config user.name t \
+    && mkdir -p kit/tokens && for i in $(seq 1 25); do echo '{}' > "kit/tokens/t$i.json"; done \
+    && echo x > app.ts && git add -A && git commit -qm init )
+for i in $(seq 1 25); do echo "{\"v\":$i}" > "$tok/kit/tokens/t$i.json"; done
+touch -t 202001010000 "$tok"/kit/tokens/t*.json
+mkstate "$tok"
+touch -t 202501010000 "$tok/.claude/.last-verify"
+echo y >> "$tok/app.ts"
+( cd "$tok" && bash "$HOOKS/done-check.sh" >/dev/null 2>&1 ); got=$?
+if [ "$got" -eq 2 ]; then echo "  PASS  blocks done when a source file postdates verify despite 20+ token changes"; pass=$((pass+1))
+else echo "  FAIL  blocks done when a source file postdates verify despite 20+ token changes (got $got)"; fail=$((fail+1)); fi
+
 echo "verify-record.sh"
 vr=$(mktemp -d); ( cd "$vr" && git init -q ); mkstate "$vr"
 echo '{"tool_input":{"command":"pnpm verify"}}' | (cd "$vr" && bash "$HOOKS/verify-record.sh" >/dev/null 2>&1)
@@ -444,6 +466,17 @@ gate=$(mktemp -d); ( cd "$gate" && git init -q ); mkstate "$gate"
 echo '{"tool_input":{"command":"node kit/scripts/accuracy_report.mjs"}}' | (cd "$gate" && bash "$HOOKS/verify-record.sh" >/dev/null 2>&1)
 if [ -f "$gate/.claude/.last-verify" ]; then echo "  PASS  /gate's accuracy_report run counts as a verify"; pass=$((pass+1))
 else echo "  FAIL  /gate's accuracy_report run counts as a verify"; fail=$((fail+1)); fi
+
+# fix-round-1 IMPORTANT: a since-removed *"/gate"* arm matched the literal
+# substring "/gate" anywhere in the command, so reading the /gate command's
+# own definition file -- plausible while working on this plugin -- falsely
+# recorded a verify that never ran. accuracy_report alone already covers the
+# real invocation (commands/gate.md runs `node .../accuracy_report.mjs`), so
+# this must never record.
+gatedoc=$(mktemp -d); ( cd "$gatedoc" && git init -q ); mkstate "$gatedoc"
+echo '{"tool_input":{"command":"cat commands/gate.md"}}' | (cd "$gatedoc" && bash "$HOOKS/verify-record.sh" >/dev/null 2>&1)
+if [ ! -f "$gatedoc/.claude/.last-verify" ]; then echo "  PASS  reading commands/gate.md does not record a verify"; pass=$((pass+1))
+else echo "  FAIL  reading commands/gate.md does not record a verify"; fail=$((fail+1)); fi
 
 echo "format.sh"
 # Self-contained fixture rather than relying on the ambient cwd: format.sh now
@@ -621,7 +654,7 @@ if [ "$(cat "$KIT_LOG_PATH" 2>/dev/null | cksum)" = "$KIT_LOG_BEFORE" ]; then
   echo "  PASS  kit's own enforcement log unchanged by the test run"; pass=$((pass+1))
 else echo "  FAIL  tests modified the kit's real enforcement log"; fail=$((fail+1)); fi
 
-rm -rf "$tmp" "$dc" "$dc2" "$vr" "$vr2" "$et" "$et2" "$et3" "$et4" "$et5" "$fm" "$ni" "$ni2" "$nogit" "$mal" "$gate" "$dt" "$pkg"
+rm -rf "$tmp" "$dc" "$dc2" "$vr" "$vr2" "$et" "$et2" "$et3" "$et4" "$et5" "$fm" "$ni" "$ni2" "$nogit" "$mal" "$gate" "$dt" "$pkg" "$tok" "$gatedoc"
 echo
 echo "pass=$pass fail=$fail"
 [ "$fail" -eq 0 ] || exit 1
