@@ -1,0 +1,9 @@
+{
+  "name": "dev-kit",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Playwright devDependency for kit/scripts' render gates (measure_render, verify_states, axe_audit, verify_focustrap, verify_rtl, ...). See README.md Notes.",
+  "devDependencies": {
+    "playwright": "^1.62.1"
+  }
+}

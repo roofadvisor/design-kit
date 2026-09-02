@@ -101,6 +101,10 @@ for (const f of files) {
     const out = [];
     for (const el of document.querySelectorAll('body *')) {
       if (['SCRIPT', 'STYLE', 'SVG', 'PATH', 'USE'].includes(el.tagName)) continue;
+      // WCAG 1.4.3 / 1.4.11 exempt disabled (inactive) controls from contrast — ported
+      // from verify_states.mjs's isDisabled check so the two render gates agree instead
+      // of disagreeing about the same success criterion on the same element.
+      if (el.disabled || el.getAttribute('aria-disabled') === 'true') continue;
       const direct = [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim().length);
       if (!direct) continue;
       if (!el.offsetParent && getComputedStyle(el).position !== 'fixed') continue; // not visible

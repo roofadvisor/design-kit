@@ -33,7 +33,7 @@ carries none of it (see README).
 **Known issues, disclosed rather than hidden:** this framework's own registry
 treats a gate that fires wrongly as worse than no gate, so the two failures
 below are named rather than suppressed. Neither is a regression introduced by
-this merge — both predate it. The first is fixed here; the second is not.
+this merge — both predate it. Both are fixed here.
 
 - **Fixed: `session-context.sh` wrote corrupt telemetry under any symlinked repo
   path.** It read the working directory with `pwd` (logical, preserving whatever
@@ -53,15 +53,26 @@ this merge — both predate it. The first is fixed here; the second is not.
   evidence: `bash tests/hooks_test.sh` goes from `pass=93 fail=1` to
   `pass=94 fail=0` on the hook change alone, and `bash scripts/verify.sh` now
   exits 0 with every gate clean.
-- `/gate` (`kit/scripts/accuracy_report.mjs`) reports **34/35**, not 35/35, on
-  a clean-room install with Playwright genuinely resolving and rendering
-  (verified via a real clean-room run, not inferred). The one failure is a
+- **Fixed: `measure_render.mjs` (the REAL-render WCAG gate) had no exemption
+  for disabled controls, so it disagreed with its sibling `verify_states.mjs`
+  about the same success criterion on the same element.** WCAG 2.2 SC 1.4.3
+  exempts inactive UI components from contrast requirements, and `tabs.html`'s
+  "Archived" tab correctly carries the `disabled` attribute
+  (`kit/examples/component-states/tabs.html`). `verify_states.mjs` already
+  encoded that exemption (`el.disabled || aria-disabled === 'true'` skips the
+  element); `measure_render.mjs` walked every visible text node with no such
+  check and scored the disabled tab's label as a live failure: **3.09:1**
+  against the **4.5:1** AA requirement it does not, in fact, owe.
+
+  This was initially misdiagnosed in this changelog — before release — as "a
   real WCAG AA contrast defect in the plugin's own bundled `tabs` component
-  harness: the inactive "Archived" tab label renders at **3.09:1** in dark
-  mode against the **4.5:1** AA requirement
-  (`kit/examples/component-states/tabs.html`). First caught during the
-  Playwright-resolution fix earlier in this branch's history; every consumer
-  who runs `/gate` will see this same failure until the harness is fixed.
+  harness." The harness was correct; the gate was wrong. It is fixed by
+  porting `verify_states.mjs`'s `isDisabled` check into `measure_render.mjs`,
+  and the evidence is the gate rerun with Playwright and Chromium newly
+  installed in this repo (`npm i -D playwright && npx playwright install
+  chromium`): `node kit/scripts/accuracy_report.mjs` goes from **34/35** to
+  **35/35** (100%), and `measure_render.mjs --dark` on every
+  `component-states/*.html` harness — `tabs.html` included — passes.
 
 Plugin identity: `dev-kit@roofadvisor` 2.0.0. Component inventory: 32 skills
 (17 inherited from `design-kit`, 15 from `f4d-kit`), 2 commands, 5 agents,
