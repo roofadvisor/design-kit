@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   verify:
-    name: "master is green"
+    name: "main is green"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
