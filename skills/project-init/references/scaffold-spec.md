@@ -103,7 +103,7 @@ makes it survive the plugin being absent entirely.
 
 ## CLAUDE.md assembly
 
-From `templates/scaffold/CLAUDE.md.tmpl`. Fill every `{{TOKEN}}`. Leave no placeholder behind.
+From `${CLAUDE_PLUGIN_ROOT}/templates/scaffold/CLAUDE.md.tmpl`. Fill every `{{TOKEN}}`. Leave no placeholder behind.
 
 - `{{ARCH_MAP}}` — 3–8 lines. What the pieces are and how requests flow. No prose paragraphs.
 - `{{RULES_INDEX}}` — one line per selected module: `` - `api.md` — HTTP surface, error envelope, versioning ``

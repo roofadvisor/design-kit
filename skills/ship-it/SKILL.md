@@ -45,7 +45,7 @@ git add <explicit paths>
 git commit -m "<type>(<scope>): <summary>"
 ```
 
-Fill the PR body from `templates/process/PR.template.md` and show it. Then ask
+Fill the PR body from `${CLAUDE_PLUGIN_ROOT}/templates/process/PR.template.md` and show it. Then ask
 before doing anything outward-facing:
 
 ```bash

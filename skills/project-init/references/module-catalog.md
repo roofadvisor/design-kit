@@ -75,7 +75,7 @@ Agents are not modules and are never asked about directly — selection rides on
 an answer already given. `verify-runner` is unconditional; each of the other
 four is selected exactly when the concern it audits is present — a single
 rules module for the first three, any one of the four design modules for
-`design-critic`. This is not a new rule: `templates/process/ENFORCEMENT.md`'s
+`design-critic`. This is not a new rule: `${CLAUDE_PLUGIN_ROOT}/templates/process/ENFORCEMENT.md`'s
 honest-audit table already pairs the first three modules with the agent that
 (advisory-)enforces each — this table just makes that pairing a selection
 decision instead of an observation, and `design-critic` follows the identical

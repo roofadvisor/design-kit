@@ -119,7 +119,7 @@ checks below — they are available immediately.
 **Design** — only meaningful when `.claude/.framework-state.json` declares a design bundle
 - **Design bundles declared but unwired.** Not every bundle adds a module —
   `design.content`, `design.direction`, and `design.govern` resolve to none by
-  design (`skills/project-init/references/module-catalog.md` § *Design
+  design (`${CLAUDE_PLUGIN_ROOT}/skills/project-init/references/module-catalog.md` § *Design
   modules* has the mapping). For the three that do —
   `design.tokens`→`design-tokens`, `design.verify`→`design-a11y`,
   `design.build`→`design-components`+`design-handoff` — a bundle whose rules

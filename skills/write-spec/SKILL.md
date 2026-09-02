@@ -12,7 +12,7 @@ A spec exists to move the disagreement earlier. Its job is to be argued with.
 1. Find the next number: `ls docs/specs/ | sort | tail -1`
 2. Draft from `${CLAUDE_PLUGIN_ROOT}/templates/process/SPEC.template.md`
 3. Fill what you can from the conversation. Ask about the rest — **in one batch, not one at a time**
-4. Check against the Definition of Ready in `templates/process/DEFINITION.md`
+4. Check against the Definition of Ready in `${CLAUDE_PLUGIN_ROOT}/templates/process/DEFINITION.md`
 5. Write `docs/specs/NNN-<slug>.md` with `Status: Draft`
 6. Report which Ready criteria are unmet. Do not mark it Ready yourself.
 

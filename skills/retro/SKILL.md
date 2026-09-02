@@ -50,7 +50,7 @@ under-emphasized. Restating it more firmly changes nothing.
 
 **Rules are for things Claude should do. Hooks are for things Claude must never do.** If the consequence is expensive or irreversible, it belongs in a hook.
 
-Read `templates/process/ENFORCEMENT.md` for the full model and this framework's own audit of which of its rules are still prose that should not be.
+Read `${CLAUDE_PLUGIN_ROOT}/templates/process/ENFORCEMENT.md` for the full model and this framework's own audit of which of its rules are still prose that should not be.
 
 ## Promote
 

@@ -15,10 +15,10 @@ Keep the system consistent as it grows. Apply versioning, contribution, and depr
 3. For a **new** component/token: confirm it serves a real, repeated need (≥ 2 places) before promoting product → candidate → core. Design it to the full quality bar (`${CLAUDE_PLUGIN_ROOT}/templates/rules/design-components.md` → Component quality bar).
 4. For a **deprecation**: mark with reason + replacement + removal version; keep working ≥ 1 minor cycle; provide a migration map (`${CLAUDE_PLUGIN_ROOT}/kit/design-systems/crosswalk.md` style); remove only in a major.
 5. Add the spec to the right file under `${CLAUDE_PLUGIN_ROOT}/kit/components/`
-   (or the token file under `kit/tokens/`) — `design-component` and
+   (or the token file under `${CLAUDE_PLUGIN_ROOT}/kit/tokens/`) — `design-component` and
    `design-code` read that file directly, so there is no separate
    per-component registry to wire it into. Only if this change *also*
-   changed the doctrine itself — a rules module under `templates/rules/*.md`,
+   changed the doctrine itself — a rules module under `${CLAUDE_PLUGIN_ROOT}/templates/rules/*.md`,
    e.g. the Component quality bar's own requirements, not one component's
    spec — update that module's frontmatter and registry row, then regenerate
    the instruction surfaces:

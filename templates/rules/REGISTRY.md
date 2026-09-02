@@ -87,14 +87,14 @@ The failure class that survives review. Highest-value column in this file.
 | ID | Rule | Should be | Today | Promote when |
 |---|---|---|---|---|
 | DS-01 | No hardcoded colour, size, or timing — every value is a token | GATE | **GATE** (`accuracy_report.mjs` → `lint_hardcodes`) | done |
-| DS-02 | A component never reads a primitive token | GATE | PROSE | open |
+| DS-02 | A component never reads a primitive token | GATE | PROSE | a primitive-token-reference check, wired into an automatic gate |
 | DS-03 | Every token has a light and a dark value | GATE | PROSE | a per-token light/dark completeness check, wired into an automatic gate |
 | DS-04 | Text meets WCAG 2.2 AA in both themes, measured not assumed | GATE | **GATE** (`accuracy_report.mjs` → `verify_states`, `validate_contrast`) | done |
 | DS-05 | Every interactive component ships all eight states | GATE | PROSE | an eight-state completeness check, wired into an automatic gate |
-| DS-06 | Every interactive component has a rendered state harness | GATE | PROSE | open |
+| DS-06 | Every interactive component has a rendered state harness | GATE | PROSE | a rendered-harness-existence check, wired into an automatic gate |
 | DS-07 | Destructive actions wear the danger token everywhere | GATE | **GATE** (`accuracy_report.mjs` → `lint_intent`) | done |
 | DS-08 | Motion respects prefers-reduced-motion with no content loss | GATE | **GATE** (`accuracy_report.mjs` → `verify_reduced_motion`) | done |
-| DS-09 | A design change has a SemVer level and a changelog entry | PROSE | PROSE | open |
+| DS-09 | A design change has a SemVer level and a changelog entry | JUDGMENT | PROSE | — |
 
 ## Database
 

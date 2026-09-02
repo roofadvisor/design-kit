@@ -173,7 +173,7 @@ Dark-themed cloud-platform aesthetic with modular grids, glass-like panels, and 
 
 ## The Library Catalog
 
-There are **138 named design systems** in `design-systems/library/`. Each is a complete `DESIGN.md` spec (visual theme, color roles + hex, typography, spacing, components, motion). Load the one that matches the brief, then translate its values through the [Framework Adapter Protocol](../frameworks/adapter-protocol.md).
+There are **138 named design systems** in this catalog — 131 documented at `design-systems/library/<name>/DESIGN.md`, and seven (`clean`, `friendly`, `modern`, `premium`, `refined`, `spacious`, `enterprise`) inlined above in [Inlined Aesthetic Specs](#inlined-aesthetic-specs) instead. Each is a complete spec (visual theme, color roles + hex, typography, spacing, components, motion). Load the one that matches the brief, then translate its values through the [Framework Adapter Protocol](../frameworks/adapter-protocol.md).
 
 
 ### AI & LLM (14)

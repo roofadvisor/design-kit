@@ -13,6 +13,6 @@ deliberative walkthrough the user asked for.
 - Evidence inline: `file:line`, exact output, exit code. Never "it should work".
 - Commands in their own fenced bash block, one command per block.
 - Cut narrating what you are about to do, summarizing what you just did, and
-  listing options you are not recommending — unless asked to compare them.
+  listing options you are not recommending — unless asked to compare or list them.
 - Uncertainty gets one clause and what would settle it, not a paragraph.
 - Long answers lead with the conclusion, detail underneath. Never bury the result.

@@ -11,7 +11,8 @@ Deliberately conservative: identifier names in the call, not data flow.
 Escape hatch: `log-ok: <reason>` on the line or the line above (reason
 required — "logs the redacted summary" is a fine reason).
 
-Exclusions: tests, fixtures. Exit 1 on any violation.
+Exclusions: tests, fixtures, kit/scripts/ (see LOCAL_CLI_DIR below). Exit 1 on
+any violation.
 """
 import os
 import re
@@ -23,6 +24,17 @@ from _common import SKIP_DIRS, repo_root  # noqa: E402
 # Additive (A21): fixture/test-data dirs are not source under O-05's remit —
 # extend the shared skip set rather than hand-copy it.
 SKIP = SKIP_DIRS | {"fixtures", "__fixtures__", "testdata"}
+
+# kit/scripts/ is the design half's own CLI: lint/validate tools (lint_hardcodes,
+# validate_theme_refs, validate_contrast, validate_tokens, ...) whose print()
+# calls ARE their user-facing output — reporting hardcoded colours, theme/token
+# definitions, contrast pairs. O-05 governs application logging that could leak
+# a real payload or credential; a linter announcing "hardcoded token" is a
+# design value, not one. This is a path exclusion, not a SKIP_DIRS name: adding
+# the bare name "scripts" to SKIP_DIRS would also prune the top-level scripts/
+# directory, which legitimately handles NOTION_TOKEN/GITHUB_TOKEN and Bearer
+# auth headers (scripts/notion_sync.py) and must stay in O-05's scope.
+LOCAL_CLI_DIR = os.path.join("kit", "scripts")
 EXT = (".py", ".ts", ".tsx", ".js", ".jsx")
 TESTY = re.compile(r"(^|[._-])test|spec\.|^tests?$")
 CALL = re.compile(
@@ -41,6 +53,10 @@ def main():
     base = repo_root()
     findings, bare, scanned = [], [], 0
     for dirpath, dirnames, filenames in os.walk(base):
+        rel_dir = os.path.relpath(dirpath, base)
+        if rel_dir == LOCAL_CLI_DIR or rel_dir.startswith(LOCAL_CLI_DIR + os.sep):
+            dirnames[:] = []  # local CLI tool output — see LOCAL_CLI_DIR above
+            continue
         dirnames[:] = [d for d in dirnames if d not in SKIP and not d.startswith(".") and not TESTY.search(d)]
         for name in filenames:
             if not name.endswith(EXT) or TESTY.search(name):
