@@ -2,7 +2,7 @@
 name: ux-writing
 description: Write or review UI copy — buttons, errors, empty states, microcopy, notifications, labels — using the voice & tone system (clear, concise, useful, human, honest) with the what→why→how error formula and inclusive-language rules. Use when the user needs interface copy, error messages, empty-state text, or a copy review.
 invocation: model
-adapted: "Roof Club 2026-08-31 - vendored from plugin87/ux-ui-agent-skills; kit paths rewritten to ${CLAUDE_PLUGIN_ROOT}/kit/ (see ${CLAUDE_PLUGIN_ROOT}/kit/PROVENANCE.md)"
+adapted: "Roof Club 2026-08-31 - vendored from plugin87/ux-ui-agent-skills; kit paths rewritten to ${CLAUDE_PLUGIN_ROOT}/kit/ (see ${CLAUDE_PLUGIN_ROOT}/PROVENANCE.md)"
 ---
 
 # Skill: UX Writing

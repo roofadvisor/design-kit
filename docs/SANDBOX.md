@@ -108,7 +108,7 @@ change in belongs in `tests/`, not here.
 ## Layout
 
 ```
-/Users/ian-ra/code-projects/f4d/
+<projects-root>/
 ├── f4d-dev-env-configurator/       ← the kit (this repo)
 │   └── .sandbox  ──────────────┐   ← symlink, gitignored
 └── f4d-plugin-dev-sandbox/  ◄──┘   ← real location, outside the kit's git repo
@@ -142,7 +142,7 @@ ever reach a commit, a push, or a CI transfer.
 ## Bringing a repo in
 
 ```bash
-SB=/Users/ian-ra/code-projects/f4d/f4d-plugin-dev-sandbox
+SB=<sandbox-root>
 git clone https://github.com/<org>/<repo>.git "$SB/<name>"
 ```
 
@@ -171,7 +171,7 @@ So you `cd` into the target and invoke the kit's script by absolute path. The
 plugin does **not** need to be installed for this:
 
 ```bash
-KIT=/Users/ian-ra/code-projects/f4d/f4d-dev-env-configurator
+KIT=<kit-root>
 export CLAUDE_PLUGIN_ROOT="$KIT"          # satisfies $CLAUDE_PLUGIN_ROOT refs in skills
 cd "$KIT/.sandbox/<name>"
 python3 "$KIT/scripts/check_statelessness.py"
@@ -247,7 +247,7 @@ Measuring across them — counts are per-gate, and the formats differ, so count
 deliberately rather than with one regex:
 
 ```bash
-KIT=/Users/ian-ra/code-projects/f4d/f4d-dev-env-configurator
+KIT=<kit-root>
 for d in ghl-mcp-audit-1 ghl-mcp-audit-2; do
   cd "$KIT/.sandbox/$d"
   echo "$d: $(python3 "$KIT/scripts/check_catch_empty.py" 2>&1 | grep -cE '^[[:space:]]+.*:[0-9]+')"
@@ -318,14 +318,14 @@ are just a cache.
 Remove one copy:
 
 ```bash
-rm -rf /Users/ian-ra/code-projects/f4d/f4d-plugin-dev-sandbox/<name>
+rm -rf <sandbox-root>/<name>
 ```
 
 Remove everything, kit untouched:
 
 ```bash
-rm /Users/ian-ra/code-projects/f4d/f4d-dev-env-configurator/.sandbox   # the symlink ONLY — no -r
-rm -rf /Users/ian-ra/code-projects/f4d/f4d-plugin-dev-sandbox
+rm <kit-root>/.sandbox   # the symlink ONLY — no -r
+rm -rf <sandbox-root>
 ```
 
 **The trailing slash is the trap, and it is not theoretical.** Measured on this
@@ -344,7 +344,7 @@ real directory by its own path, in that order.
 Rehydrate any row from the table in about 30 seconds:
 
 ```bash
-SB=/Users/ian-ra/code-projects/f4d/f4d-plugin-dev-sandbox
+SB=<sandbox-root>
 git clone https://github.com/roofadvisor/GHL-MCP.git "$SB/ghl-mcp-audit-1"
 git -C "$SB/ghl-mcp-audit-1" remote set-url --push origin DISABLED-sandbox-clone-no-push
 git -C "$SB/ghl-mcp-audit-1" checkout c5e2de9f
