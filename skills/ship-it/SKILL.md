@@ -24,7 +24,9 @@ Report findings before proceeding. UNSAFE or BREAKING findings block the PR.
 
 ## 3. Definition of Done
 
-Walk `${CLAUDE_PLUGIN_ROOT}/templates/process/DEFINITION.md`. Report each unmet item explicitly — never silently pass one.
+Walk `${CLAUDE_PLUGIN_ROOT}/templates/process/DEFINITION.md`. If the project
+carries `.claude/rules/design-handoff.md`, walk its Definition of Done too.
+Report each unmet item explicitly — never silently pass one.
 
 ## 4. Rollback
 
@@ -35,20 +37,32 @@ Write the actual undo path. Test the claim:
 
 ## 5. PR
 
+Draft first, then stop. Stage explicit paths — never `git add -A`, which sweeps
+untracked and generated files.
+
 ```bash
-git add -A
+git add <explicit paths>
 git commit -m "<type>(<scope>): <summary>"
-git push -u origin <branch>
-gh pr create --title "<type>(<scope>): <summary>" --body-file .github/pull_request_template.md
 ```
 
-Fill the template from `templates/process/PR.template.md`. Link the spec or explain its absence.
+Fill the PR body from `templates/process/PR.template.md` and show it. Then ask
+before doing anything outward-facing:
+
+```bash
+git push -u origin <branch>
+gh pr create --title "<type>(<scope>): <summary>" --body-file <drafted body>
+```
+
+Push and PR creation are hard to walk back. Run them only on an explicit yes.
 
 ## 6. Release, if this is one
 
-- Bump the version per semver — a breaking API or payload change is major, no exceptions for "nobody's using it yet"
-- Add a `CHANGELOG.md` entry written for a consumer, not a committer: what changed for them, and what they must do
-- Tag after merge, never before
+- List the commits since the last tag, so the changelog describes what actually
+  changed: `git log --oneline "$(git describe --tags --abbrev=0)"..HEAD`
+- Read the diff and **propose** the semver level with your reasoning. A breaking
+  API or payload change is major — argue it rather than assume it. Wait for a yes.
+- Add a `CHANGELOG.md` entry written for a consumer, not a committer.
+- Tag after merge, never before, and only on explicit confirmation.
 
 ## 7. Work DB
 
