@@ -1207,6 +1207,28 @@ grep -rn "f4d-kit" hooks/ skills/ templates/ scripts/ tests/ commands/ agents/
 Every remaining hit must be historical record per Step 2. List them in the report
 with one line each saying why it stays.
 
+- [ ] **Step 3d: Add the missing `${CLAUDE_PLUGIN_ROOT}/` prefixes**
+
+Added 2026-09-02 from Task 9's review (Minor, pre-existing, repo-wide). Three
+skills reference plugin-owned template files by bare relative path, which only
+resolves when the working directory happens to be the plugin root:
+
+- `skills/ship-it/SKILL.md:48` — `templates/process/PR.template.md`
+- `skills/write-spec/SKILL.md:15`
+- `skills/retro/SKILL.md:53`
+
+Two lines above the `ship-it` one, `templates/process/DEFINITION.md` **is**
+correctly prefixed, so the file contradicts itself. Prefix all three with
+`${CLAUDE_PLUGIN_ROOT}/`. Then grep for the same pattern across every skill —
+these three were found incidentally, so treat them as a sample rather than the
+whole set:
+
+```bash
+grep -rn '`templates/' skills/ | grep -v 'CLAUDE_PLUGIN_ROOT'
+```
+
+Every hit is a path that breaks in a scaffolded project.
+
 - [ ] **Step 4a: Stop `check_log_hygiene` firing on design tokens**
 
 Added 2026-09-02 (ruling R-27). `bash scripts/verify.sh` currently reports
