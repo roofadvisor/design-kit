@@ -55,6 +55,13 @@ def load_state(base):
     state = json.load(open(p)) if os.path.exists(p) else {}
     state.setdefault("version", None)
     state.setdefault("files", {})
+    # C1: repos scaffolded before the design-bundle interview question shipped
+    # have no "bundles" key at all. Absent means [] here, never a KeyError in
+    # this script or in a caller (project-audit) that reads state["bundles"]
+    # expecting a list it can iterate. Symmetric with save_state below, which
+    # already round-trips this key once it exists — the only gap was the read
+    # side crashing (or a caller crashing) on a file written before it did.
+    state.setdefault("bundles", [])
     return state
 
 

@@ -116,6 +116,28 @@ checks below — they are available immediately.
 - Any `stateless-ok` annotation without a reason after it
 - Every `stateless-ok import-time registration` annotation: **re-verify the claim** — re-grep the register function's call sites; any non-top-level or handler-reachable call site (including a lazy/dynamic import of the registering module) invalidates the annotation. Report it; never trust an annotation whose evidence no longer holds. This re-verification is the audit's job, not the user's.
 
+**Design** — only meaningful when `.claude/.framework-state.json` declares a design bundle
+- **Design bundles declared but unwired.** Not every bundle adds a module —
+  `design.content`, `design.direction`, and `design.govern` resolve to none by
+  design (`skills/project-init/references/module-catalog.md` § *Design
+  modules* has the mapping). For the three that do —
+  `design.tokens`→`design-tokens`, `design.verify`→`design-a11y`,
+  `design.build`→`design-components`+`design-handoff` — a bundle whose rules
+  module is absent from `.claude/rules/`, or whose gate is missing from the
+  verify command, is a finding. A declared capability nothing runs is a
+  finding, not a pass.
+- **Playwright unresolvable.** Run
+  `node "$CLAUDE_PLUGIN_ROOT/kit/scripts/measure_render.mjs" "$CLAUDE_PLUGIN_ROOT/kit/examples/sample-app/preview.html"`
+  — an explicit, plugin-owned fixture, not `--help` (undocumented by the
+  script itself; with no file argument it silently falls back to scanning
+  this repo's own `examples/`, which may or may not exist in the audited repo
+  and proves nothing either way). A "playwright not installed" line means
+  every render gate in this repo is reporting SKIPPED. Report it as an
+  environment finding — a skipped gate is never a passed gate.
+- **Stale plugin namespaces.** `grep -rn "f4d-kit:\|design-kit:" CLAUDE.md
+  AGENTS.md .claude/rules/ 2>/dev/null`. Both retired at dev-kit 2.0.0; a
+  stale prefix names a skill that no longer resolves.
+
 **Code-level spot checks**
 - Any test that calls a live external API
 - Any `float` in a currency path

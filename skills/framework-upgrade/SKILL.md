@@ -52,6 +52,19 @@ A rule the plugin dropped but the project still holds. Usually means the rule wa
 demoted framework-wide but is still load-bearing here — or that it is genuinely
 dead. Ask, then either keep it as a documented local rule or remove it with a note.
 
+## Named migrations
+
+Version-specific reshapes the generic classification above cannot express on
+its own — the mechanical diff can only call the old side `ORPHAN` and the new
+side `NEW`, which is technically true and not useful on its own. Check this
+list before resolving either.
+
+**`frontend` → design modules (2.0.0).** A manifest listing `frontend` predates
+the split. Ask which design capabilities the project actually has, then replace
+that entry with the matching `design-*` ids and copy the modules in. Do not map
+`frontend` to all four silently — it was seven bullets, and the four modules
+assert far more than it did.
+
 ## After applying
 
 1. Run the project verify command. An upgrade that breaks verify is not done.
