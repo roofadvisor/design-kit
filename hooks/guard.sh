@@ -60,7 +60,17 @@ fi
 [ -n "$sql_hit" ] && deny "C-03" "destructive database operation. Use a migration, or scripts/dev-reset.sh locally."
 
 case "$scrubbed" in
-  *".env"*|*"id_rsa"*|*".pem"*|*"credentials.json"*)
+  # `.env` is anchored, not a bare substring. Unanchored it denied every command
+  # containing `process.env`, `os.environ`, or `import.meta.env` — three of the
+  # most common expressions in Node and Python. It blocked this repo's own
+  # design-gate resolver, which reads process.env.CLAUDE_CONFIG_DIR, three times
+  # while that fix was being tested; a guard that fires on ordinary code is a
+  # guard people route around. A file named .env is preceded by a path
+  # separator, whitespace, a quote, or the start of the command. A property
+  # access is preceded by an identifier character. Anchoring on that keeps every
+  # real read blocked — including one sitting beside a property access in the
+  # same command — while letting the property access through.
+  ".env"*|*[!A-Za-z0-9_]".env"*|*"id_rsa"*|*".pem"*|*"credentials.json"*)
       deny "C-01" "secret material is off-limits. Use .env.example and describe the variable instead." ;;
   *"keystore"*|*"mnemonic"*|*"seed phrase"*|*".key"*)
       deny "C-01" "key material is off-limits." ;;

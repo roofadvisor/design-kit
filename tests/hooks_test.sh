@@ -91,6 +91,20 @@ check "allows .env.example"                0 guard.sh '{"tool_input":{"command":
 check "allows .env.example by path"        0 guard.sh '{"tool_input":{"file_path":"/x/.env.example"}}'
 check "blocks real .env by path"           2 guard.sh '{"tool_input":{"file_path":"/x/.env"}}'
 
+# The pattern matched `.env` as a bare substring, so it denied every command
+# containing `process.env` or `os.environ` — two of the most common expressions
+# in Node and Python. It blocked this repo's own design-gate resolver, which
+# reads process.env.CLAUDE_CONFIG_DIR, three times while that fix was being
+# tested. A file named .env is preceded by a path separator, whitespace, a
+# quote, or the start of the command; a property access is preceded by an
+# identifier character. That is the distinction, and it is what these assert.
+check "allows process.env property access" 0 guard.sh '{"tool_input":{"command":"node -e \"console.log(process.env.HOME)\""}}'
+check "allows os.environ property access"  0 guard.sh '{"tool_input":{"command":"python3 -c \"import os; print(os.environ)\""}}'
+check "allows import.meta.env"             0 guard.sh '{"tool_input":{"command":"grep -r import.meta.env src/"}}'
+check "still blocks a real .env read"      2 guard.sh '{"tool_input":{"command":"cat .env"}}'
+check "still blocks .env after a slash"    2 guard.sh '{"tool_input":{"command":"cat ./config/.env"}}'
+check "blocks .env even beside a property" 2 guard.sh '{"tool_input":{"command":"node -e \"process.env.X\" && cat .env"}}'
+
 echo "rule-zero.sh"
 check "blocks V2 variant"      2 rule-zero.sh "{\"tool_input\":{\"file_path\":\"$tmp/reportV2.ts\"}}"
 check "blocks -final variant"  2 rule-zero.sh "{\"tool_input\":{\"file_path\":\"$tmp/report-final.ts\"}}"
