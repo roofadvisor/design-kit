@@ -23,7 +23,12 @@ Treat the token + component API as a public contract and version with SemVer:
 2. **Validate** — does it serve a real, repeated need? One-off → keep it in the product, not the system.
 3. **Design to the bar** — full spec: anatomy, variants, sizes, the 8 states, token mapping, a11y (`${CLAUDE_PLUGIN_ROOT}/templates/rules/design-components.md` → Component quality bar).
 4. **Review** — run `workflows/design-review.md` + `a11y-audit`; verify tokens with `scripts/validate_tokens.py` and contrast with `scripts/contrast.py`.
-5. **Document & ship** — add the spec file, then update the owning module's
+5. **Document & ship** — add the spec file under `kit/components/` (or the
+   token file under `kit/tokens/`) — `design-component` and `design-code`
+   read that file directly, so there is no separate registry to wire it
+   into. Only if the change *also* touched a rules module
+   (`templates/rules/*.md` — e.g. the Component quality bar's own
+   requirements, not one component's spec) do you update that module's
    frontmatter and registry row and regenerate the instruction surfaces:
    `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/render_instructions.py" --rules-dir .claude/rules --write`.
    Never hand-edit `CLAUDE.md` — it is generated, and `check_instruction_honesty.py`
