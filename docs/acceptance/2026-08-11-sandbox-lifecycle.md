@@ -79,7 +79,7 @@ Remote for all three: `https://github.com/roofadvisor/GHL-MCP.git`
 | `ghl-mcp-audit-3` | `e42e9d9c` | `main` | 2026-08-11T19:43 | current main, this run |
 
 ```bash
-SB=/Users/ian-ra/code-projects/f4d/f4d-plugin-dev-sandbox
+SB=<sandbox-root>   # this run used the local f4d-plugin-dev-sandbox directory docs/SANDBOX.md describes
 git clone https://github.com/roofadvisor/GHL-MCP.git "$SB/<name>"
 git -C "$SB/<name>" remote set-url --push origin DISABLED-sandbox-clone-no-push
 git -C "$SB/<name>" checkout <sha>
