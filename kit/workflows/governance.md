@@ -21,9 +21,14 @@ Treat the token + component API as a public contract and version with SemVer:
 
 1. **Propose** — open an issue: problem, evidence (where it recurs), proposed pattern. Check it isn't an existing component/variant first.
 2. **Validate** — does it serve a real, repeated need? One-off → keep it in the product, not the system.
-3. **Design to the bar** — full spec: anatomy, variants, sizes, the 8 states, token mapping, a11y (`${CLAUDE_PLUGIN_ROOT}/kit/rules/components.md` → Component Quality Bar).
+3. **Design to the bar** — full spec: anatomy, variants, sizes, the 8 states, token mapping, a11y (`${CLAUDE_PLUGIN_ROOT}/templates/rules/design-components.md` → Component quality bar).
 4. **Review** — run `workflows/design-review.md` + `a11y-audit`; verify tokens with `scripts/validate_tokens.py` and contrast with `scripts/contrast.py`.
-5. **Document & ship** — add the spec file, wire it into CLAUDE.md (File Reference Map + relevant table), bump version, changelog.
+5. **Document & ship** — add the spec file, then update the owning module's
+   frontmatter and registry row and regenerate the instruction surfaces:
+   `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/render_instructions.py" --rules-dir .claude/rules --write`.
+   Never hand-edit `CLAUDE.md` — it is generated, and `check_instruction_honesty.py`
+   (C-10) flags a hand-edit as drift. Bump the version and add the changelog
+   entry via `ship-it`, which owns the bump.
 
 **Promotion path:** product one-off → candidate (documented, used in ≥2 places) → core (stable API, versioned). Don't promote prematurely.
 
@@ -45,4 +50,5 @@ Never delete silently. Deprecate, then remove:
 ## Verification
 - Does the proposed change have a SemVer level and a changelog entry?
 - For removals: is there a deprecation period, a replacement, and a migration table?
-- Is the spec at the full quality bar and wired into CLAUDE.md?
+- Is the spec at the full quality bar, and did any instruction-surface change go
+  through the module's frontmatter and the renderer — never a hand-edit to `CLAUDE.md`?

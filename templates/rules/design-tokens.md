@@ -95,6 +95,76 @@ every other tier.
    presets, keyframes) come from `design-tokens.json`. Never hardcode timing or
    easing.
 
+## Color guidelines
+
+### Contrast
+
+| Element | Minimum ratio |
+|---|---|
+| Normal text (< 24px) | 4.5:1 |
+| Large text (≥ 24px, or ≥ 18.66px bold) | 3:1 |
+| UI components and graphical objects | 3:1 (a purely decorative border/divider is exempt) |
+| Focus indicators | 3:1 |
+
+### Color usage
+
+1. **Never color-only** — pair every color-coded signal with an icon, text, or
+   pattern.
+2. **Feedback colors** — success (green), warning (amber), error (red), info
+   (blue).
+3. **Interactive colors** — every clickable element uses `action.primary` or
+   `text.link`.
+4. **Limit the palette** — one primary, one destructive, neutrals. Accent
+   colors are used sparingly.
+5. **Token BY INTENT (non-negotiable)** — pick the token whose *meaning*
+   matches the action, not just any token that resolves to the right pixels:
+   - Destructive actions (Delete, Remove, Revoke) use `action.destructive` /
+     `component.button.destructive-bg` — never `action.primary`. The same
+     destructive action wears the same danger variant everywhere (the trigger
+     button and its confirm-modal button never disagree).
+   - Primary = the one main affirmative action. Secondary = neutral
+     (transparent/outline, dark text — never a colored fill). Danger =
+     destructive.
+   - One action role, one variant, across every page. A blue "Delete" is a bug.
+6. **No emoji, anywhere** — not just as icons. Never as an icon, bullet,
+   status dot, rating face, section marker, or decoration, in UI, code, JSON,
+   copy, comments, or commit messages. Use a real icon set (lucide) as inline
+   SVG with `currentColor`, or plain words. Enforced by
+   `python3 "${CLAUDE_PLUGIN_ROOT}/kit/scripts/check_no_emoji.py"`.
+
+### Color generation
+
+New palette, new brand hue? Use OKLCH for perceptually uniform shade scales:
+
+1. Define the brand hue (e.g. hue = 264 for purple).
+2. Generate 11 shades from L=97% (50) to L=15% (950) with consistent chroma.
+3. Verify the 500 shade meets 4.5:1 contrast on white for text use.
+4. Verify the 600 shade meets 3:1 contrast on white for UI use.
+
+### Single-theme consistency
+
+Every page, screen, and component in a project renders from **one shared
+token theme** — never a per-page palette or ad-hoc colors. This is what keeps
+a 50-screen product visually identical and themeable from one place.
+
+1. **One source of truth** — `design-tokens.json` → a single CSS-variable
+   layer (`:root` + `[data-theme="dark"]`) imported once at the app root.
+   Every page references the same semantic tokens; none redefines colors.
+2. **No off-theme values** — zero hardcoded hex/px/timing in component or
+   page code. Enforced by `lint_hardcodes.py` (the one allowed exception:
+   adapter theme-config that maps our tokens *into* a 3rd-party API, e.g.
+   MUI/Mantine).
+3. **Real WCAG, on the source** — the token theme itself passes WCAG 2.2 in
+   both light and dark before any page ships. Enforced by
+   `validate_contrast.py`.
+4. **One gate runs all of it** — `/gate` (or
+   `node "${CLAUDE_PLUGIN_ROOT}/kit/scripts/accuracy_report.mjs"`) bundles
+   token, contrast, and hardcode validation so nothing merges on drift.
+
+Switching brand or theme means editing the token source once and letting
+every page update. If a page "looks different," it bypassed the theme — that
+is a bug, not a variant.
+
 ## After any edit
 
 ```

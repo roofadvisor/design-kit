@@ -6,6 +6,34 @@ always_apply: false
 
 Loaded when you are creating or changing something in `src/components/`.
 
+## Atomic design
+
+Build from small to large — **Atoms → Molecules → Organisms → Templates →
+Pages**:
+
+- Atoms are indivisible (Button, Input, Icon).
+- Molecules combine atoms for a task (Form Field = Label + Input + Error).
+- Organisms are complex sections (Header, Data Table, Modal).
+- Templates define page-level layout (Dashboard, Auth, Settings).
+
+Before drafting a new spec, check whether the piece you need already has one:
+`${CLAUDE_PLUGIN_ROOT}/kit/components/atoms.md`, `molecules.md`,
+`organisms.md`, `templates.md`, plus the domain files (`navigation.md`,
+`feedback.md`, `forms-advanced.md`, `overlays.md`, `data-display.md`,
+`icon-system.md`). Match the existing spec format rather than starting fresh.
+
+## Component quality bar
+
+Every component spec needs all six, not just the ones that are easy:
+
+1. **Anatomy diagram** — visual structure breakdown.
+2. **Variants** — every visual variant (primary, secondary, ghost, etc.), as
+   a table.
+3. **Sizes** — sm, md, lg with exact dimensions, as a table.
+4. **States** — all 8 applicable states (see "The eight states" below).
+5. **Token mapping** — every value traced to a design token.
+6. **Accessibility** — ARIA pattern, keyboard model, screen-reader behavior.
+
 ## Structure
 
 One component per folder, named in PascalCase, exporting a single named component:
@@ -57,6 +85,10 @@ rest is not done.
 6. Content is hostile. Long unbroken strings, empty lists, one item, forty items,
    a missing image, a number with nine digits. Handle them or the layout breaks
    in production instead of in review.
+7. Progressive disclosure. Show only what's needed at each step: primary
+   actions stay visible, secondary actions are one interaction away (a menu,
+   an expand), and advanced options sit behind an explicit "Advanced" toggle
+   rather than surfacing by default.
 
 ## Composition, before anything is styled
 

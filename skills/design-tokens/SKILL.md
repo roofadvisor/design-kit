@@ -10,7 +10,7 @@ adapted: "Roof Club 2026-08-31 - vendored from plugin87/ux-ui-agent-skills; kit 
 Produce and maintain DTCG (`$type`/`$value`) tokens following the project's 3-tier system.
 
 ## Steps
-1. Read `${CLAUDE_PLUGIN_ROOT}/kit/rules/tokens-and-color.md` → "Token System" + "Color Guidelines" and `${CLAUDE_PLUGIN_ROOT}/kit/rules/typography-and-spacing.md` for the rules (4px base, Major Third scale, OKLCH palette generation, dark-mode-at-semantic-layer).
+1. Read `${CLAUDE_PLUGIN_ROOT}/templates/rules/design-tokens.md` for the three-tier system, naming, dark mode, type scale (4px base, Major Third scale), and Color guidelines (contrast, OKLCH palette generation, single-theme consistency).
 2. Read the relevant existing files in `${CLAUDE_PLUGIN_ROOT}/kit/tokens/` to match structure: `colors.json`, `typography.json`, `spacing.json`, `shadows.json`, `borders.json`, `breakpoints.json`, `motion.json`, `gradients.json`, `opacity.json`, `blur.json`, `sizing.json`, `states.json`, `theming.json`.
 3. Generate/extend tokens:
    - Primitives = raw values (never used directly). Semantic = purpose aliases. Component = component-scoped.

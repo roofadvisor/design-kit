@@ -280,3 +280,8 @@ After each task:
 | A/B testing | Optimization | 1000+ users | 1–2 weeks | Conversion data |
 | Surveys | Broad feedback | 100+ users | 5 min each | Quantitative satisfaction |
 | Diary studies | Usage patterns | 10–15 users | 1–2 weeks | Behavioral insights |
+
+Five users is not a compromise for usability testing — it catches roughly 85%
+of usability issues; additional users mostly re-find the same problems. Spend
+the extra budget on another round after fixing what the first five surfaced,
+not on a bigger single round.

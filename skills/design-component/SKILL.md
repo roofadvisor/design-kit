@@ -10,7 +10,7 @@ adapted: "Roof Club 2026-08-31 - vendored from plugin87/ux-ui-agent-skills; kit 
 Produce a complete component specification matching the project format.
 
 ## Steps
-1. Read `${CLAUDE_PLUGIN_ROOT}/kit/rules/components.md` → "Component Quality Bar" (the 8-state table) and "Atomic Design"; the always-on 8-state table is in `CLAUDE.md` → Non-Negotiables.
+1. Read `${CLAUDE_PLUGIN_ROOT}/templates/rules/design-components.md` → "Component quality bar" and "Atomic design"; the 8-state table is in the same file under "The eight states", and the always-on version is in `CLAUDE.md` → Non-Negotiables.
 2. Check if it already exists: `${CLAUDE_PLUGIN_ROOT}/kit/components/atoms.md`, `molecules.md`, `organisms.md`, `templates.md`, `navigation.md`, `feedback.md`, `forms-advanced.md`, `overlays.md`. Match the existing spec format.
 3. Pull the ARIA pattern from `${CLAUDE_PLUGIN_ROOT}/kit/accessibility/aria-patterns.md` and contrast/target rules from `${CLAUDE_PLUGIN_ROOT}/kit/accessibility/wcag-checklist.md`.
 4. Map every value to tokens (`${CLAUDE_PLUGIN_ROOT}/kit/tokens/*.json`) — sizes via `sizing.json`, states via `states.json`.

@@ -12,12 +12,17 @@ Keep the system consistent as it grows. Apply versioning, contribution, and depr
 ## Steps
 1. Read `${CLAUDE_PLUGIN_ROOT}/kit/workflows/governance.md` (SemVer table, contribution workflow, deprecation policy, change comms).
 2. Classify the change: **major** (breaking — renamed/removed token or prop, changed anatomy/default), **minor** (additive — new token/component/variant/optional prop), **patch** (fix — contrast/bug/doc/value tweak in tolerance).
-3. For a **new** component/token: confirm it serves a real, repeated need (≥ 2 places) before promoting product → candidate → core. Design it to the full quality bar (`${CLAUDE_PLUGIN_ROOT}/kit/rules/components.md` → Component Quality Bar).
+3. For a **new** component/token: confirm it serves a real, repeated need (≥ 2 places) before promoting product → candidate → core. Design it to the full quality bar (`${CLAUDE_PLUGIN_ROOT}/templates/rules/design-components.md` → Component quality bar).
 4. For a **deprecation**: mark with reason + replacement + removal version; keep working ≥ 1 minor cycle; provide a migration map (`${CLAUDE_PLUGIN_ROOT}/kit/design-systems/crosswalk.md` style); remove only in a major.
-5. Wire any new file into `CLAUDE.md` (File Reference Map + relevant table/router) and add a changelog entry.
+5. Update the module's frontmatter and registry row, then regenerate the
+   instruction surfaces: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/render_instructions.py" --rules-dir .claude/rules --write`.
+   Never hand-edit `CLAUDE.md` — it is generated, and `check_instruction_honesty.py`
+   (C-10) will flag a hand-edit as drift. Add the changelog entry via `ship-it`,
+   which owns the bump.
 
 ## Verification (definition of done)
 - Change has a SemVer level **and** a changelog entry.
 - Removals have a deprecation window, a replacement, and a migration table.
-- New spec meets the 8-state + a11y + token-mapping bar and is reachable via the router.
+- New spec meets the 8-state + a11y + token-mapping bar, and any instruction-surface
+  change went through the frontmatter + renderer — never a hand-edit to `CLAUDE.md`.
 - `python3 ${CLAUDE_PLUGIN_ROOT}/kit/scripts/validate_tokens.py` passes; contrast re-checked if colors changed.
