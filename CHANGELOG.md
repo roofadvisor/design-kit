@@ -1,5 +1,45 @@
 # Changelog
 
+## 2.0.1 — the guards stop firing on ordinary work
+
+Seventeen fixes since 2.0.0, every one found by using the plugin rather than
+reading it. No interface change: each narrows a check that was denying legitimate
+work, or widens one that was missing a real leak.
+
+- **C-01 rebuilt twice.** It first matched dotenv *filenames*, denying
+  `process.env` and `os.environ` in every Node and Python command. The
+  replacement matched reader *verbs*, and an adversarial review measured it
+  against the rule it replaced: 65 commands newly allowed, only 4 of them
+  intended. The other 61 were working leaks — `awk`, `python3 -c`,
+  `curl -d @file`, `scp`, and `tac`, which is `cat` spelled backwards. It is an
+  allowlist now: nine enumerated safe operations, deny by default, every command
+  segment judged separately. A verb denylist that loses to reversing a word was
+  never the mechanism.
+- **Key material anchored.** Dictionary access denied as "key material is
+  off-limits" because the extension was matched as a bare substring.
+- **Shell control flow made transparent.** A loop that read only `.gitignore`
+  denied, because a secrets filename appeared in it as a search pattern rather
+  than a target. Keywords are now stripped and the real verb behind them judged,
+  so a loop body that genuinely reads the file still denies.
+- **Credential literals matched by issuer shape**, replacing a glob that denied
+  the `sk-SK` locale and the npm lifecycle variables — the latter in every repo
+  the plugin is installed in. Known issuers only; that limit is now stated in the
+  code rather than implied.
+- **Telemetry.** `verify-record.sh` truncated per line, so a multi-line command
+  wrote one log line per input line — 91% of a real log was commit-message
+  fragments, and `/retro` and `/project-audit` read that file.
+  `session-context.sh` compared a logical `pwd` against a physical git root,
+  mis-tagging every session reached through a symlink.
+- **Broken references.** 17 skills cited a file at the wrong path; 131 catalog
+  entries pointed into a directory this plugin deliberately does not ship, and
+  now link to their real specs upstream at a pinned commit.
+- **CI that had never run.** `main-verify.yml` watched `branches: [master]` in a
+  repo whose default branch is `main`.
+
+Upgrading is `claude plugin update dev-kit@roofadvisor`. Note that the updater
+compares version strings, not commits — fixes pushed without a version bump do
+not reach an installed copy, which is why this release exists.
+
 ## 2.0.0 — dev-kit: design-kit and f4d-kit merged into one plugin
 
 `design-kit@roofadvisor` (the UX/UI design toolkit, 1.0.0) and `f4d-kit@f4d`
