@@ -907,7 +907,7 @@ Files written before Task 6 have no `bundles` key. Treat a missing key as `[]` a
 **`frontend` → design modules (2.0.0).** A manifest listing `frontend` predates
 the split. Ask which design capabilities the project actually has, then replace
 that entry with the matching `design-*` ids and copy the modules in. Do not map
-`frontend` to all four silently — it was seven bullets, and the four modules
+`frontend` to all four silently — it was six bullets, and the four modules
 assert far more than it did.
 ```
 
