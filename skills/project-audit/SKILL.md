@@ -145,9 +145,22 @@ took the migration path instead of a fresh `/project-init`.
   and proves nothing either way). A "playwright not installed" line means
   every render gate in this repo is reporting SKIPPED. Report it as an
   environment finding — a skipped gate is never a passed gate.
-- **Stale plugin namespaces.** `grep -rn "f4d-kit:\|design-kit:" CLAUDE.md
-  AGENTS.md .claude/rules/ 2>/dev/null`. Both retired at dev-kit 2.0.0; a
-  stale prefix names a skill that no longer resolves.
+- **Stale plugin namespaces.** `grep -rnE "(f4d-kit|design-kit):" CLAUDE.md
+  AGENTS.md .claude/rules/ .cursor/rules/ 2>/dev/null | grep -vE
+  "(f4d-kit|design-kit):rules([^a-zA-Z0-9_-]|$)"`. Both retired at dev-kit
+  2.0.0; a stale prefix names a skill that no longer resolves. Scans all
+  three files `render_instructions.py` writes to (`CLAUDE.md`, `AGENTS.md`,
+  `.cursor/rules/dev-kit.mdc` — the last lives under `.cursor/rules/`, not
+  `.claude/rules/`) plus the project's own rule modules. The second grep
+  excludes `render_instructions.py`'s own `f4d-kit:rules` /
+  `design-kit:rules` block-sentinel markers (the `BEGIN`/`END` comments
+  around the generated rules index — a block name, never a skill reference)
+  so the sentinel itself stops reporting as a finding; a genuine stale
+  reference such as `f4d-kit:project-init` still matches the first grep and
+  is untouched by the second, since `project-init` is not `rules`. Do not
+  rename the sentinel to "fix" this — every already-scaffolded repo carries
+  the old `f4d-kit:rules` marker in committed files, and renaming it makes
+  the renderer append a second block instead of replacing the first.
 
 **Code-level spot checks**
 - Any test that calls a live external API
