@@ -101,6 +101,20 @@ fi
 # `[ -f "$ROOT/x" ]` under `set -uo pipefail` aborts with "ROOT: unbound
 # variable" before the `[` ever runs. A guard that cannot evaluate cleanly on
 # every caller is the opposite of "skips cleanly."
+#
+# This block is permanently dark IN THIS REPO, by construction: the plugin's
+# own tree never carries .claude/rules/design-tokens.md (the plugin is not
+# itself a scaffolded design product). Nor does it matter for a scaffolded
+# project either way — nothing copies verify.sh into one, so this exact file
+# never runs there. That is not this block's job — it stayed here only as
+# the pattern a copied verify.sh would follow if one ever existed. The
+# automatic path that actually matters lives one level down:
+# skills/project-init/references/scaffold-spec.md's "Verify command by
+# stack" table appends the same accuracy_report.mjs invocation (guarded the
+# same way, on CLAUDE_PLUGIN_ROOT rather than a rules file, since a scaffolded
+# project's OWN verify script and CLAUDE.md are what carry it) to every
+# project that actually selects a design bundle — so a real design project's
+# verify command, not this one, is where the gate genuinely fires.
 if [ -f "$KIT/.claude/rules/design-tokens.md" ]; then
   section "design gate"
   if node "${CLAUDE_PLUGIN_ROOT:-$KIT}/kit/scripts/accuracy_report.mjs"; then

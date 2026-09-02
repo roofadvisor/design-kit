@@ -121,8 +121,39 @@ From `${CLAUDE_PLUGIN_ROOT}/templates/scaffold/CLAUDE.md.tmpl`. Fill every `{{TO
 | Both | chain them with `&&`, Python first |
 | + contracts module | append `&& pnpm contracts:check` |
 | + blockchain module | append `&& forge fmt --check && forge test && forge snapshot --check` |
+| + any design module (`design-tokens` / `design-a11y` / `design-components` in `decided_modules`) | append `&& { [ -z "${CLAUDE_PLUGIN_ROOT:-}" ] && echo "design gate: SKIPPED — no CLAUDE_PLUGIN_ROOT (not a Claude Code session)" || node "${CLAUDE_PLUGIN_ROOT:-}/kit/scripts/accuracy_report.mjs"; }` |
 
 Write it once, identically, in three places: `CLAUDE.md`, the `verify` script, and the CI workflow. If they can drift, they will.
+
+**Why the design row is a guarded conditional, and why `templates/github/gates.yml`
+gets no design job.** `accuracy_report.mjs` (what `/gate` runs) is the *plugin's*
+own self-check: every one of its checks runs against
+`${CLAUDE_PLUGIN_ROOT}/kit/`'s own bundled tokens and example harnesses — its
+`KIT_ROOT` constant is hardcoded to its own directory, never to this project's
+`design-tokens.json` or `src/components/`. `${CLAUDE_PLUGIN_ROOT}` resolves only
+inside an active Claude Code session with the plugin installed; it is never set
+on a bare CI runner, which also has no `kit/` tree to point at. That is exactly
+why this row, unlike its siblings above, is a conditional rather than a bare
+command: this section requires the *same string* in `CLAUDE.md`, the `verify`
+script, **and** the CI workflow (Step 10 renders `{{VERIFY}}` from the same
+command Step 9 wrote) — an unguarded `node "${CLAUDE_PLUGIN_ROOT}/..."` would be
+byte-identical everywhere and still silently fail every scaffolded design
+project's CI on every single PR, forever, since neither the variable nor `kit/`
+will ever exist on that runner. The guard keeps the command genuinely identical
+in all three places (nothing to special-case, nothing to drift) while being
+correct in each: it runs for real wherever the plugin is present — a human or
+agent running the project's own `verify` locally, and `ship-it` step 1, both
+always inside a Claude Code session — and prints an honest `SKIPPED` line and
+exits 0 everywhere else, instead of failing on a precondition CI cannot meet.
+`templates/github/gates.yml` gets no matching design job for the identical
+reason one level up: making one work for real would mean vendoring `kit/`'s
+scripts, tokens, and example harnesses, plus a Playwright/Chromium install,
+into every scaffolded project's CI checkout — reviving the
+copy-the-engine-into-every-project model duplicate review #1 retired for this
+merge (see the merge design doc). `skills/project-audit/SKILL.md` § *Design*
+already treats "Playwright unresolvable" as a reported finding rather than a
+silent pass; the guarded line above applies that same honesty automatically,
+on every verify run, instead of waiting for an audit to notice it.
 
 ## Toolchain pins
 

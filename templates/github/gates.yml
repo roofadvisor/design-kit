@@ -1,6 +1,21 @@
 name: gates
 # Rule-registry gates. These FAIL the build — they are not advisory.
 # Each job names the rule IDs it enforces so a failure is traceable to REGISTRY.md.
+#
+# Deliberately no design job here. accuracy_report.mjs (`/gate`) only ever
+# tests the PLUGIN's own kit/ tokens and example harnesses — its KIT_ROOT is
+# hardcoded to its own directory, never to this project's design-tokens.json
+# or src/components/ — and it needs ${CLAUDE_PLUGIN_ROOT} plus a Playwright
+# install, neither of which exists on a bare Actions runner. Making a design
+# job here work for real would mean vendoring kit/'s scripts, tokens, and
+# example harnesses into every scaffolded project's CI checkout — the
+# copy-the-engine-into-every-project model this merge retired on purpose. The
+# design gate instead runs from the project's own verify command (see
+# skills/project-init/references/scaffold-spec.md § "Verify command by
+# stack"), which a human or agent invokes from inside a Claude Code session
+# where ${CLAUDE_PLUGIN_ROOT} genuinely resolves — including automatically
+# via ship-it step 1. That command guards itself and skips honestly (not
+# silently) when that precondition isn't met, which is exactly this runner.
 
 on:
   pull_request:
