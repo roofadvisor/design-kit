@@ -11,12 +11,31 @@ set -uo pipefail
 hook_opted_in || exit 0
 root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
 
-# Every added/modified/untracked path, excluding docs and config.
-changed=$(git -C "$root" status --porcelain 2>/dev/null \
-  | sed 's/^...//' \
-  | grep -Ev '\.(md|txt|json|ya?ml|lock)$' \
-  | grep -Ev '^(docs|\.github|\.claude)/' \
-  | head -20)
+# Every added/modified/untracked path, excluding docs and config. Token
+# sources are re-admitted explicitly, ahead of the blanket extension
+# exclusion below: that exclusion is right for package.json/tsconfig.json/
+# lockfiles but was also silently swallowing design-tokens.json and
+# kit/tokens/*.json, which are a design project's source of truth, not
+# project config.
+#
+# This is two independent filter passes over the same `git status`, unioned,
+# rather than one grep -E include-list. An include-list built from a single
+# alternation is tempting but wrong here: a branch meant to mean "no
+# extension" (e.g. `[^.]*$`) matches a trailing empty string at the end of
+# ANY line — including "package.json" — so it silently admits everything and
+# defeats the exclusion entirely. Two separate, narrow passes avoid that trap.
+changed=$(
+  {
+    git -C "$root" status --porcelain 2>/dev/null \
+      | sed 's/^...//' \
+      | grep -Ev '^(docs|\.github|\.claude)/' \
+      | grep -E '(^|/)design-tokens\.json$|(^|/)kit/tokens/.*\.json$'
+    git -C "$root" status --porcelain 2>/dev/null \
+      | sed 's/^...//' \
+      | grep -Ev '^(docs|\.github|\.claude)/' \
+      | grep -Ev '\.(md|txt|json|ya?ml|lock)$'
+  } | head -20
+)
 [ -z "$changed" ] && exit 0
 
 marker="$root/.claude/.last-verify"

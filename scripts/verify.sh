@@ -90,6 +90,27 @@ else
   printf '  %-24s %s\n' "check_test_count" "C-08"
 fi
 
+# Design gate — only when the project carries design rules. verify.sh is named
+# to match verify-record.sh's pattern, so running it is what makes done-check
+# satisfiable; the design gate belongs inside it for the same reason.
+#
+# Guards on $KIT, not a bare $ROOT: this script's own root variable is $KIT
+# (set above, from dirname "$0"), and set -u turns any reference to an unset
+# $ROOT into an immediate hard crash of the whole script — guard condition
+# false or true, design repo or not. Confirmed by hand: a plain
+# `[ -f "$ROOT/x" ]` under `set -uo pipefail` aborts with "ROOT: unbound
+# variable" before the `[` ever runs. A guard that cannot evaluate cleanly on
+# every caller is the opposite of "skips cleanly."
+if [ -f "$KIT/.claude/rules/design-tokens.md" ]; then
+  section "design gate"
+  if node "${CLAUDE_PLUGIN_ROOT:-$KIT}/kit/scripts/accuracy_report.mjs"; then
+    printf '  %-24s clean\n' "accuracy_report"
+  else
+    printf '  %-24s FAILURES ABOVE\n' "accuracy_report"
+    fail=1
+  fi
+fi
+
 section "result"
 if [ "$fail" -eq 0 ]; then
   echo "  VERIFY PASSED"

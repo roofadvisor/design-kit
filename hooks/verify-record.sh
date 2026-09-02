@@ -10,6 +10,7 @@ cmd=$(hook_field "$input" "command")
 
 case "$cmd" in
   *verify*|*"pytest"*|*"vitest"*|*"forge test"*|*"npm test"*|*"pnpm test"*) ;;
+  *accuracy_report*|*"/gate"*) ;;
   *) exit 0 ;;
 esac
 
