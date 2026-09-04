@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+# build_tokens.mjs — the unmapped-group report, and the composite types it used to drop.
+#
+# Why this harness exists: three roof-club systems each declared `font.line-height` where the
+# builder reads `font.leading`, and every line-height was dropped from every build for weeks with
+# no error and nothing obviously missing from the CSS. The builder had no tests at all. Every
+# assertion below is red-then-green — the warning is seen to fire before it counts (G-01).
+set -uo pipefail
+KIT="$(cd "$(dirname "$0")/.." && pwd)"
+B="$KIT/kit/scripts/build_tokens.mjs"
+pass=0; fail=0
+check() { if [ "$2" -eq "$3" ]; then pass=$((pass+1)); else fail=$((fail+1)); echo "FAIL: $1 (expected exit $2, got $3)"; fi }
+has()   { if printf '%s' "$2" | grep -q -- "$3"; then pass=$((pass+1)); else fail=$((fail+1)); echo "FAIL: $1 (missing: $3)"; fi }
+hasnt() { if printf '%s' "$2" | grep -q -- "$3"; then fail=$((fail+1)); echo "FAIL: $1 (unexpected: $3)"; else pass=$((pass+1)); fi }
+
+# A minimal but realistic two-file system, the layout every roof-club system uses.
+fixture() {
+  local d; d="$(mktemp -d)"
+  cat > "$d/colors.json" <<'JSON'
+{ "primitive": { "ink": { "900": { "$type": "color", "$value": "#111111" } } },
+  "semantic": {
+    "surface": { "page": {"$type":"color","$value":"#ffffff"}, "card": {"$type":"color","$value":"#ffffff"}, "raised": {"$type":"color","$value":"#fafafa"} },
+    "text": { "primary": {"$type":"color","$value":"{primitive.ink.900}"}, "secondary": {"$type":"color","$value":"#555555"},
+              "tertiary": {"$type":"color","$value":"#666666"}, "link": {"$type":"color","$value":"#0645ad"}, "on-action": {"$type":"color","$value":"#ffffff"} },
+    "action": { "primary": {"$type":"color","$value":"#0b5d3b"} },
+    "border": { "strong": {"$type":"color","$value":"#767676"}, "default": {"$type":"color","$value":"#dddddd"} } } }
+JSON
+  cat > "$d/foundation.json" <<'JSON'
+{ "font": { "family": { "body": {"$type":"fontFamily","$value":["Inter","sans-serif"]} },
+            "size": { "md": {"$type":"dimension","$value":"14px"} },
+            "leading": { "normal": {"$type":"number","$value":1.5} } },
+  "space": { "1": {"$type":"dimension","$value":"4px"} } }
+JSON
+  printf '%s' "$d"
+}
+
+# ---------- the report ----------
+D="$(fixture)"
+out=$(node "$B" --in "$D" --out "$D/out.css" 2>&1); check "clean system exits 0" 0 $?
+hasnt "clean system warns about nothing" "$out" "WARNING"
+has   "clean system emits the leading token" "$(cat "$D/out.css")" "--leading-normal"
+
+# red: the exact roof-club bug — the builder reads font.leading, not font.line-height
+sed -i '' 's/"leading"/"line-height"/' "$D/foundation.json"
+out=$(node "$B" --in "$D" --out "$D/out.css" 2>&1); check "unmapped group still builds (warn, not fail)" 0 $?
+has "unmapped group is reported"        "$out" "produced no CSS variable"
+has "unmapped group is named"           "$out" "font.line-height"
+has "the near-miss sibling is suggested" "$out" "font.leading"
+hasnt "the dropped var is genuinely absent" "$(cat "$D/out.css")" "--leading-"
+
+# --strict is what a project's own token gate should run
+node "$B" --in "$D" --out "$D/out.css" --strict >/dev/null 2>&1; check "--strict makes an unmapped group fatal" 1 $?
+sed -i '' 's/"line-height"/"leading"/' "$D/foundation.json"
+node "$B" --in "$D" --out "$D/out.css" --strict >/dev/null 2>&1; check "--strict passes a clean system" 0 $?
+rm -rf "$D"
+
+# ---------- the addressing forms ----------
+# Claimed paths resolve either bare (font.size) or stem-namespaced (typography.fontSize)
+# depending on the layout. Checking a leaf against only one form made EVERY directory-layout
+# token read as unmapped — 62 false positives on the kit's own tokens.
+D="$(fixture)"; rm "$D/foundation.json"
+cat > "$D/typography.json" <<'JSON'
+{ "fontFamily": { "body": {"$type":"fontFamily","$value":["Inter","sans-serif"]} },
+  "fontSize": { "md": {"$type":"dimension","$value":"14px"} },
+  "lineHeight": { "normal": {"$type":"number","$value":1.5} } }
+JSON
+cat > "$D/spacing.json" <<'JSON'
+{ "scale": { "1": {"$type":"dimension","$value":"4px"} } }
+JSON
+out=$(node "$B" --in "$D" --out "$D/out.css" 2>&1)
+hasnt "stem-namespaced layout is not falsely flagged" "$out" "WARNING"
+has   "stem-namespaced layout still emits" "$(cat "$D/out.css")" "--leading-normal"
+rm -rf "$D"
+
+# ---------- composites that used to be dropped in silence ----------
+D="$(mktemp -d)"
+cat > "$D/colors.json" <<'JSON'
+{ "semantic": { "surface": {"page":{"$type":"color","$value":"#fff"},"card":{"$type":"color","$value":"#fff"},"raised":{"$type":"color","$value":"#fafafa"}},
+  "text": {"primary":{"$type":"color","$value":"#111"},"secondary":{"$type":"color","$value":"#555"},"tertiary":{"$type":"color","$value":"#666"},"link":{"$type":"color","$value":"#06c"},"on-action":{"$type":"color","$value":"#fff"}},
+  "action": {"primary":{"$type":"color","$value":"#063"}},
+  "border": {"strong":{"$type":"color","$value":"#767676"},"default":{"$type":"color","$value":"#ddd"}} } }
+JSON
+cat > "$D/borders.json" <<'JSON'
+{ "width": { "thin": {"$type":"dimension","$value":"1px"} },
+  "style": { "default": {"$type":"border","$value":{"width":"1px","style":"solid","color":"#dddddd"}} } }
+JSON
+cat > "$D/gradients.json" <<'JSON'
+{ "brand": { "primary": {"$type":"gradient","$value":[{"color":"#4f46e5","position":0},{"color":"#7c3aed","position":1}]} } }
+JSON
+cat > "$D/shadows.json" <<'JSON'
+{ "elevation": { "sm": {"$type":"shadow","$value":[{"offsetX":"0","offsetY":"1px","blur":"2px","spread":"0","color":"rgba(0,0,0,0.1)"}]} } }
+JSON
+css=$(node "$B" --in "$D" 2>/dev/null)
+has "border width emits"                 "$css" "--border-width-thin: 1px"
+has "border composite emits a shorthand"  "$css" "--border-default: 1px solid #dddddd"
+has "gradient stops emit a linear-gradient" "$css" "linear-gradient(#4f46e5 0%, #7c3aed 100%)"
+# A gradient stop array and a shadow layer array are both arrays of objects; `position` is what
+# tells them apart, so prove the shadow path did not regress into a gradient.
+has "shadow layers still emit as shadows" "$css" "--shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.1)"
+hasnt "shadow did not become a gradient"  "$css" "--shadow-sm: linear-gradient"
+rm -rf "$D"
+
+echo "pass=$pass fail=$fail"
+[ "$fail" -eq 0 ]

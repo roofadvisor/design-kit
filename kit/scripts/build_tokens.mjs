@@ -32,13 +32,18 @@ const TOKENS = SINGLE ? dirname(IN) : IN;
 
 // 1) load every token file into a global path->value map (file-namespaced + bare)
 const all = {};
+// Every leaf, in BOTH addressing forms, so step 5 can prove each one reached the output.
+// A group is claimed either bare (`font.size`, single-file layout) or stem-namespaced
+// (`typography.fontSize`, directory layout) depending on which candidate path resolved, so a
+// leaf has to be checked against both or every directory-layout token reads as unmapped.
+const leaves = [];
 const SOURCES = SINGLE ? [IN.split('/').pop()] : readdirSync(TOKENS).filter(n => n.endsWith('.json'));
 for (const f of SOURCES) {
   const data = JSON.parse(readFileSync(join(TOKENS, f)));
   const stem = f.replace(/\.json$/, '');
   (function walk(o, p) {
     if (o && typeof o === 'object') {
-      if ('$value' in o) { all[p] = o.$value; all[`${stem}.${p}`] = o.$value; }
+      if ('$value' in o) { all[p] = o.$value; all[`${stem}.${p}`] = o.$value; leaves.push({ bare: p, full: `${stem}.${p}` }); }
       for (const k of Object.keys(o)) if (!k.startsWith('$')) walk(o[k], p ? `${p}.${k}` : k);
     }
   })(data, '');
@@ -114,6 +119,14 @@ const GROUPS = [
   [['typography.textStyle'], 'text-'], // composite styles: the adapters declare `font: var(--text-label)`
   [['space', 'spacing.scale'], 'space-'],
   [['radius', 'borders.radius'], 'radius-'],
+  [['borders.width'], 'border-width-'],
+  [['borders.style'], 'border-'],                  // composite -> the `border` shorthand
+  [['gradients.brand'], 'gradient-'],
+  [['gradients.surface'], 'gradient-surface-'],
+  [['gradients.accent'], 'gradient-accent-'],
+  [['gradients.feedback'], 'gradient-'],
+  [['typography.letterSpacing'], 'tracking-'],
+  [['states'], 'state-'],
   [['radius-semantic', 'borders.radius-semantic'], 'radius-'],
   [['shadow', 'shadows.elevation'], 'shadow-'],
   [['shadows.inner'], 'shadow-inner-'],
@@ -128,6 +141,8 @@ const GROUPS = [
   [['blur'], 'blur-'],
   [['z', 'breakpoints.z-index'], 'z-'],
   [['data-viz.categorical'], 'color-chart-'],
+  [['data-viz.sequential'], 'color-chart-seq-'],   // ordered/continuous ramp
+  [['data-viz.diverging'], 'color-chart-div-'],    // two-ended ramp
   [['data-viz.semantic'], 'color-chart-'],
   [['data-viz.axis'], 'color-chart-axis-'],
   [['data-viz.surface'], 'color-chart-'],
@@ -170,7 +185,23 @@ function cssValue(v, dark = null) {
     // DTCG uses arrays for three types; dispatch on element type, not blindly cubicBezier
     if (typeof v[0] === 'number') return `cubic-bezier(${v.join(', ')})`;
     if (typeof v[0] === 'string') return v.map(n => /\s/.test(n) ? `"${n}"` : n).join(', '); // fontFamily stack
-    if (typeof v[0] === 'object') { const layers = v.map(o => shadowLayer(o, dark)).filter(Boolean); return layers.length ? layers.join(', ') : null; }
+    if (typeof v[0] === 'object') {
+      // DTCG gradient stops carry `position`; shadow layers never do. Without this the stop
+      // objects fell through to shadowLayer, produced nothing, and every gradient token was
+      // dropped in silence — which step 5 now reports rather than hides.
+      if ('position' in v[0]) {
+        const stops = v.map(st => {
+          const c = res(st.color, 0, dark);
+          const col = typeof c === 'string' ? c : st.color;
+          return `${col} ${Math.round(Number(st.position) * 100)}%`;
+        });
+        // No direction is encoded in the token, so no direction is invented here: bare stops
+        // use CSS's own default (to bottom).
+        return `linear-gradient(${stops.join(', ')})`;
+      }
+      const layers = v.map(o => shadowLayer(o, dark)).filter(Boolean);
+      return layers.length ? layers.join(', ') : null;
+    }
     return null;
   }
   if (typeof v === 'number') return String(v);
@@ -189,6 +220,12 @@ function cssValue(v, dark = null) {
       const part = (x) => { const r = res(x, 0, dark); return cssValue(r, dark) ?? (typeof r === 'string' ? r : null); };
       const dur = part(v.duration ?? '0ms'), tf = part(v.timingFunction ?? 'ease'), delay = part(v.delay ?? '0ms');
       return dur && tf ? `${dur} ${tf}${delay && delay !== '0ms' ? ' ' + delay : ''}` : null;
+    }
+    // DTCG border composite -> the CSS shorthand
+    if ('style' in v && ('width' in v || 'color' in v)) {
+      const part = (x) => { const r = res(x, 0, dark); return typeof r === 'string' || typeof r === 'number' ? String(r) : null; };
+      const w = part(v.width), st = part(v.style), c = part(v.color);
+      return [w, st, c].filter(Boolean).join(' ') || null;
     }
     return shadowLayer(v, dark); // single shadow object
   }
@@ -215,9 +252,11 @@ function emitGroup(node, prefix, bucket, dark = null) {
   }
 }
 
+const claimed = ['primitive', 'semantic', 'component', 'dark']; // colours: handled in step 3
 for (const [paths, prefix] of GROUPS) {
   const node = at(paths);
   if (!node) continue;
+  claimed.push(...(Array.isArray(paths) ? paths : [paths]).filter(p => lookup(p)));
   if (typeof node === 'object' && '$value' in node) {
     // a leaf group entry (e.g. shadows.focus-ring) emits one var named by its prefix
     const out = cssValue(node.$value);
@@ -229,6 +268,55 @@ for (const [paths, prefix] of GROUPS) {
 // a shadow that references a surface (the focus ring's gap colour) has to follow dark
 const shadowNode = at(['shadow', 'shadows.elevation']);
 if (colors.dark && shadowNode) emitGroup(shadowNode, 'shadow-', 'dark', flattenDark(colors.dark));
+
+/* 5) Prove every token reached the output.
+
+   A group this builder does not recognise is otherwise dropped in silence. roof-club's base,
+   product and operator systems each declared `font.line-height` where the builder reads
+   `font.leading`, so every line-height vanished from every build for weeks — no error, and
+   nothing conspicuously absent from the CSS to notice. A token you wrote and cannot use is
+   worse than one you never wrote, because you believe it is live.
+
+   Warns by default so an upgrade cannot break an existing build; `--strict` makes it fatal,
+   which is what a project's own token gate should use. */
+const STRICT = process.argv.includes('--strict');
+/* Groups that are real tokens but genuinely cannot be a custom property. Listed explicitly, with
+   the reason, rather than left to warn: a check that cries wolf gets ignored, and then it is
+   worth nothing on the day it is right. Anything NOT here and NOT in GROUPS is a bug. */
+const NOT_EMITTED = [
+  ['motion.keyframes', 'composite from/to recipes — encode as CSS @keyframes'],
+  ['motion.reducedMotion', 'a prefers-reduced-motion media-query concern, not a value'],
+  ['theming', 'theme and density sets are applied by selection, not flattened into :root'],
+];
+const covers = (path) => claimed.some(c => path === c || path.startsWith(`${c}.`));
+const excused = (path) => NOT_EMITTED.some(([c]) => path === c || path.startsWith(`${c}.`));
+const unmapped = leaves.filter(
+  (l) => !covers(l.bare) && !covers(l.full) && !excused(l.bare) && !excused(l.full)
+);
+if (unmapped.length) {
+  // Report the containing group, not every leaf under it: one line saying `font.line-height
+  // (2 tokens)` beats twenty saying `font.line-height.tight`.
+  const byGroup = new Map();
+  for (const l of unmapped) {
+    const parts = l.full.split('.');
+    const key = parts.length > 1 ? parts.slice(0, -1).join('.') : l.full;
+    const g = byGroup.get(key) || { n: 0, root: l.bare.split('.')[0] };
+    g.n += 1;
+    byGroup.set(key, g);
+  }
+  // Every path this builder knows, for the near-miss suggestion.
+  const known = GROUPS.flatMap(([paths]) => paths);
+  const w = STRICT ? 'ERROR' : 'WARNING';
+  console.error(`\n${w}: ${unmapped.length} token(s) produced no CSS variable — nothing consumes them:`);
+  for (const [g, { n, root }] of [...byGroup].sort()) {
+    console.error(`  ${g}  (${n} token${n === 1 ? '' : 's'})`);
+    // A wrong key is nearly always a near miss, so name the siblings under the same root.
+    const near = known.filter(k => k.split('.')[0] === root);
+    if (near.length) console.error(`      this builder reads: ${near.join(', ')}`);
+  }
+  console.error('  Rename the group to one the builder reads, or delete it. Suppress with neither.\n');
+  if (STRICT) process.exit(1);
+}
 
 const css = `/* Generated by scripts/build_tokens.mjs from ${SINGLE ? arg('in') : 'tokens/*.json'} — do not edit by hand. */
 :root {
