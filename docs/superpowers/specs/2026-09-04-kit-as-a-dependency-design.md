@@ -1,6 +1,6 @@
 # The kit is a dependency — design
 
-- **Status:** design approved section-by-section in brainstorm, 2026-09-04; awaiting owner review of this document before `writing-plans`
+- **Status:** design approved section-by-section in brainstorm, 2026-09-04; amended on owner review the same day (un-vendoring folded in, §4.6); awaiting approval of this document before `writing-plans`
 - **Date:** 2026-09-04
 - **Release:** dev-kit 2.2.0 (minor)
 - **Records the decision as:** `docs/decisions/005-kit-as-a-dependency.md` (written in this release)
@@ -36,7 +36,7 @@ Three consequences, each observed rather than inferred:
 
 The plugin's stated purpose is to enforce good practice for a solo developer or a team with the
 design system living beside the code. A gate that cannot run in CI, a seed that cannot build,
-and a check with a false negative (found on the way — §4.6) are each the pattern this session
+and a check with a false negative (found on the way — §4.7) are each the pattern this session
 kept meeting: a check that cannot fire, failing nowhere.
 
 ## 2. The decision
@@ -94,6 +94,9 @@ Every claim below was run, not read, on 2026-09-04 against `e7aa5f8` (2.1.0).
 | Directory layout under file-scoped colour claims | `spacing.semantic.*` — **30 tokens** (page 4, card 3, stack 6, inline 4, component 13) — emit nothing and are hidden by 2.1.0's bare `semantic` claim; the output has zero `--space-page/stack/inline/card/component` |
 | `data-viz.json` | Two refs to `{dataviz.…}`; the file is `data-viz`. Both resolvers accept it by stripping a ref's first segment unconditionally |
 | roof-club | Not touched by the false negative (`foundation.json` has no colour-tier key). Its `verify.sh` min-version check reads `$KIT/../.claude-plugin/plugin.json`, which `files` ships |
+| Registry gates relocated to `node_modules` | In a synthetic consumer (git-initialised, `.claude/rules/`, sources, kit under `node_modules`): `check_guess_lists`, `check_statelessness`, `check_log_hygiene` exit 0 with **zero findings inside `node_modules`**; `render_instructions.py --check` exits 0 (it takes `--rules-dir`; needs no `_common`); a planted `console.log(user.password)` is caught from the relocated copy. No script edits: each finds `_common.py` beside itself and takes the repo root from git or cwd |
+| Are stale `.github/scripts/` copies self-flagged? | **No.** The walkers skip every dot-directory, so `.github/` is invisible to them — which is also why the vendored copies never tripped the scanners. A forgotten copy needs its own assertion (§4.6) |
+| The relocated copy run inside the *plugin's own* repo | flags the scanner's in-repo twin — each excludes itself by `__file__`, and the twin is a different path. An artifact of that test, not of relocation; recorded so nobody repeats it |
 
 ## Assumptions on record
 
@@ -122,7 +125,7 @@ the fallback, at the cost of `files` scoping.
   "name": "@roofadvisor/dev-kit",
   "version": "<mirrors .claude-plugin/plugin.json>",
   "private": true,
-  "files": ["kit", ".claude-plugin"],
+  "files": ["kit", "scripts", ".claude-plugin"],
   "devDependencies": { "playwright": "^1.62.1" }
 }
 ```
@@ -135,11 +138,10 @@ the fallback, at the cost of `files` scoping.
 - `private: true` stays. It blocks `npm publish`; it does not block git installs (measured).
 - The Playwright devDependency stays for the plugin's own render gates. Consumers do not
   inherit devDependencies (measured).
-- `files` ships `kit/` whole (the render scripts and `accuracy_report.mjs` reach `kit/examples`)
-  and `.claude-plugin/` so the one version-read path — `$KIT/../.claude-plugin/plugin.json` —
-  works identically from a plugin cache and from `node_modules`. `scripts/` (the registry
-  gates `project-init` copies into `.github/scripts/`) is deliberately **not** shipped: un-vendoring
-  those is a follow-on (§7), and shipping unused directories invites the question.
+- `files` ships `kit/` whole (the render scripts and `accuracy_report.mjs` reach `kit/examples`),
+  `scripts/` (the registry gates and `render_instructions.py` — §4.6, about 220 kB more), and
+  `.claude-plugin/` so the one version-read path — `$KIT/../.claude-plugin/plugin.json` — works
+  identically from a plugin cache and from `node_modules`.
 
 Consumers pin by tag:
 
@@ -153,8 +155,8 @@ reproduces it and survives a runner with no SSH key (measured). Two costs stated
 roof-club's Render build does — now fetches from github.com as well as npmjs.org.
 
 **F.** `tests/release_test.sh`, in `scripts/verify.sh`'s harness loop, asserts: the two
-`version` fields are equal; `name` is `@roofadvisor/dev-kit`; `files` contains exactly `kit`
-and `.claude-plugin`. `ship-it` §6 runs the same assertions before tagging. F lands first, as
+`version` fields are equal; `name` is `@roofadvisor/dev-kit`; `files` contains exactly `kit`,
+`scripts` and `.claude-plugin`. `ship-it` §6 runs the same assertions before tagging. F lands first, as
 its own commit, because the drift is live now.
 
 ### 4.2 Tags (B)
@@ -242,19 +244,21 @@ itself does not change.
 **(d) A named migration in `framework-upgrade`**, in the prose form the existing
 *"`frontend` → design modules (2.0.0)"* entry uses — *"kit as a devDependency (2.2.0)"*:
 add the pinned devDependency; delete the inline fragment or `devkit-path.sh` and repoint its
-call sites; confirm the CI setup runs `npm ci`; run the project verify (an upgrade that breaks
-verify is not done). roof-club migrates first, in this release; GHL-MCP when it adopts a
+call sites; delete `.github/scripts/check_*.py` and `render_instructions.py` and repoint
+`gates.yml` (§4.6); confirm the CI setup runs `npm ci`; run the project verify (an upgrade that
+breaks verify is not done). roof-club migrates first, in this release; GHL-MCP when it adopts a
 design bundle.
 
 **(e) `templates/github/gates.yml`** keeps no design job. Its header comment (lines 5–13) is
-rewritten: the design gate runs in `verify.yml`'s Verify step, and now runs for real there.
+rewritten: the design gate runs in `verify.yml`'s Verify step, and now runs for real there. The
+registry gates it does run come from `node_modules` (§4.6).
 
 ### 4.5 The decision record (E)
 
 `docs/decisions/005-kit-as-a-dependency.md`, in the house ADR shape (`# 005 — …`, Status,
-Date, Context, Decision, Consequences). Context: the three resolvers; no automated authoring
-gate anywhere; 62 dead tokens found by 2.1.0 and 30 more hidden from it; single-file mode
-never exercised. Decision: §2. Consequences: §6. And a section the format does not usually
+Date, Context, Decision, Consequences). Context: the three resolvers; fourteen gate scripts copied into every project; no automated
+authoring gate anywhere; 62 dead tokens found by 2.1.0 and 30 more hidden from it; single-file
+mode never exercised. Decision: §2. Consequences: §6. And a section the format does not usually
 need — *what this supersedes* — quoting the two scaffold-spec rationales and stating which
 premise each rested on and why it no longer holds, so the earlier reasoning is preserved as
 correct-for-its-time rather than deleted as wrong.
@@ -262,7 +266,31 @@ correct-for-its-time rather than deleted as wrong.
 The scaffold-spec's three paragraphs (lines 156–166) and the row at line 124 are rewritten to
 state the new rule and point at the ADR.
 
-### 4.6 Bugs shipped in the same release
+### 4.6 The registry gates come the same way
+
+`project-init` copies fourteen `check_*.py` and `render_instructions.py` into a project's
+`.github/scripts/`, and `templates/github/gates.yml` runs `python ".github/scripts/$1"`. Those
+copies drift exactly as the three resolvers did, and `framework-upgrade` exists partly to re-sync
+them. With the kit a dependency, the copying stops:
+
+- `files` ships `scripts/` (§4.1).
+- The `gates.yml` template gains `actions/setup-node` with `cache: npm` and an `npm ci` step, and
+  runs `python node_modules/@roofadvisor/dev-kit/scripts/$1`. `check_commits` and
+  `check_test_count` keep their `BASE_REF`; nothing else about the jobs changes.
+- `project-init` step 10 stops copying into `.github/scripts/`; the directory is not created.
+- The `framework-upgrade` migration (§4.4d) deletes a project's copies **and asserts they are
+  gone** — one line in the migration and in `gates.yml`: `! ls .github/scripts/check_*.py`. The
+  assertion is necessary, not belt-and-braces: the walkers skip dot-directories, so a forgotten
+  copy is invisible to every scanner (§3).
+- No script changes. Each scanner locates `_common.py` beside itself and the repo root from git
+  or cwd; `render_instructions.py` takes `--rules-dir`. Measured in a synthetic consumer (§3) and
+  pinned by the relocation test (§5).
+
+Cost, stated for the person paying: a private repository's `gates.yml` now runs `npm ci` — paid
+Actions minutes, roughly 10–20 s per run with the cache. roof-club has no `gates.yml`. Public
+repositories pay nothing.
+
+### 4.7 Bugs shipped in the same release
 
 Each is on the critical path: §4.4 scaffolds a gate that uses `--strict`, and `--strict` has to
 be telling the truth first.
@@ -287,7 +315,7 @@ be telling the truth first.
   file stem is rejected by both, and every existing token set — the kit's, the seed, roof-club's
   three systems — still resolves.
 
-### 4.7 Release — 2.2.0
+### 4.8 Release — 2.2.0
 
 Minor, not patch: a new install surface, 30 newly emitted variables, changed `project-init`
 output. Not major: every registry-resolved gate keeps working for an un-migrated project, and
@@ -303,9 +331,10 @@ bullets with the numbers, upgrade line). Tagged `v2.2.0` by §4.2's step after m
 | B1 regression | an unmapped `semantic` in a non-colour file is reported |
 | B2 | the 30 `--space-*` names emit; no name collides with the scale |
 | B3b regression | a fake-namespace ref fails in `build_tokens.mjs` and `validate_tokens.py`; all known token sets still build |
+| Relocation test (`tests/relocation_test.sh`) | in a synthetic consumer, the three registry gates and `render_instructions.py` run from `node_modules`: silent on a clean tree with zero findings inside `node_modules`; a planted `console.log(user.password)` is caught; the `.github/scripts/` absence assertion fails when a copy is planted |
 | roof-club, migrated | `npm run verify` green with **no** plugin cache on the path (`KIT` unset, `~/.claude/plugins` masked in the test env) — the real CI simulation |
 | roof-club fake-kit tests | still pass: an empty `KIT` fails naming `npm ci`; a 2.0.1 kit is refused |
-| **Consumer end-to-end**, a job in the plugin's own `.github/workflows/` | on a bare `ubuntu-latest`, with `actions/setup-python` 3.12 as `gates.yml` already uses: `npm init -y`, install `github:roofadvisor/dev-kit#${{ github.sha }}`, copy the seed to `design-tokens.json`, run §4.4(b)'s exact command, assert exit 0 and that `src/theme.css` carries the parity count of variables |
+| **Consumer end-to-end**, a job in the plugin's own `.github/workflows/` | on a bare `ubuntu-latest`, with `actions/setup-python` 3.12 as `gates.yml` already uses: `npm init -y`, install `github:roofadvisor/dev-kit#${{ github.sha }}`, copy the seed to `design-tokens.json`, run §4.4(b)'s exact command, assert exit 0 and that `src/theme.css` carries the parity count of variables; then run one registry gate from `node_modules` the way the `gates.yml` template does |
 
 The last row is the one this spec exists for. It would have caught "3.7a never worked" the day
 3.7a was written, and it will catch the next seed, gate, or install regression on the pull
@@ -320,8 +349,10 @@ request that introduces it.
   took in §3, per deploy. The real costs are two couplings: github.com must be reachable at deploy
   time, and **dev-kit must stay public** — were it made private, `npm ci` on Render would need a
   token. Noted in the ADR and the roof-club migration.
-- No Actions minutes are added to any private repository: roof-club gains no workflow, and the
-  consumer end-to-end job (§5) runs in dev-kit's own repository, which is public and free.
+- The kit fetch itself adds no Actions minutes anywhere: roof-club gains no workflow, and the
+  consumer end-to-end job (§5) runs in dev-kit's own repository, which is public and free. A
+  private repository that already runs `gates.yml` pays for the `npm ci` that now precedes its
+  registry gates — roughly 10–20 s per run with the cache (§4.6).
 - `node_modules` grows by 759 kB in every consumer.
 - Contributors must `npm ci` before `npm run verify` — already true for any Next project.
 - Gates and skills resolve the kit differently from now on: gates use the pinned copy, skills
@@ -336,8 +367,6 @@ request that introduces it.
 ## 7. Non-goals and follow-ons
 
 - **npm publish.** `private: true` stays; git-ref pinning is sufficient and reproducible.
-- **Un-vendoring the registry gates** (`check_*.py` → `.github/scripts/`). `files` deliberately
-  excludes `scripts/` now; when this is taken up, ship it and repoint `gates.yml`.
 - **A Python dependency route** for projects with no `package.json`.
 - **Render gates in CI** (`measure_render`, axe, focus-trap). They need Playwright and Chromium;
   the scaffold-spec's rejection of that stands.
@@ -362,20 +391,23 @@ Each step ends green on its own validators; a `SKIPPED` gate is never a passed g
 3. **Seed + parity test + `/gate` checks** (§4.4a).
 4. **Tags** (§4.2) — backfill, `ship-it` step.
 5. **roof-club migration** (§4.3, §4.4d) — its verify green with no plugin cache reachable.
-6. **project-init, scaffold-spec, `gates.yml`, ADR 005** (§4.4b–e, §4.5).
-7. **Consumer end-to-end job** (§5, last row).
-8. **CHANGELOG, `release: 2.2.0`, merge, `v2.2.0`.**
+6. **Un-vendor the registry gates** (§4.6) — `files`, the `gates.yml` template, `project-init`
+   step 10, the migration's delete-and-assert, and the relocation test.
+7. **project-init, scaffold-spec, `gates.yml`, ADR 005** (§4.4b–e, §4.5).
+8. **Consumer end-to-end job** (§5, last row).
+9. **CHANGELOG, `release: 2.2.0`, merge, `v2.2.0`.**
 
 ## 9. Files touched
 
-- `package.json`, `package-lock.json` (regenerated), `tests/release_test.sh`, `scripts/verify.sh`
+- `package.json`, `package-lock.json` (regenerated), `tests/release_test.sh`,
+  `tests/relocation_test.sh` (new), `scripts/verify.sh`
 - `kit/scripts/build_tokens.mjs`, `kit/scripts/validate_tokens.py`, `kit/tokens/data-viz.json`,
   `tests/token_build_test.sh`
 - `kit/scripts/make_single_file_tokens.mjs` (new), `templates/scaffold/design-tokens.json` (new),
   `kit/scripts/accuracy_report.mjs`
 - `skills/ship-it/SKILL.md`, `skills/project-init/SKILL.md` (3.7a, steps 9–10),
   `skills/project-init/references/scaffold-spec.md` (row 124, §§ at 156–166),
-  `skills/framework-upgrade/SKILL.md` (named migration), `templates/github/gates.yml` (header)
+  `skills/framework-upgrade/SKILL.md` (named migration), `templates/github/gates.yml` (header, `npm ci`, gate path)
 - `docs/decisions/005-kit-as-a-dependency.md` (new), `CHANGELOG.md`, `.claude-plugin/plugin.json`
 - `.github/workflows/` — the consumer end-to-end job
 - roof-club: `package.json`, `design/systems/verify.sh`, `scripts/devkit-path.sh` (deleted),
