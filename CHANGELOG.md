@@ -1,5 +1,26 @@
 # Changelog
 
+## 2.1.1 — Rule 0 allows a plan beside its spec
+
+One fix, found by using the plugin. `rule-zero.sh` blocked the first plan ever
+written to the plugin's own convention: `writing-plans` puts a spec at
+`docs/superpowers/specs/<x>-design.md` and its plan at
+`docs/superpowers/plans/<x>.md`; the hook derives a concept from the plan's stem,
+finds the spec repo-wide, and refuses. The merge's own pair predates the hook and
+had never exercised it. The hook's message offered "state why a second file is the
+right shape" — a step it provided no mechanism for.
+
+- **A plan beside its spec is allowed.** A match whose basename is
+  `<concept>-design.md` or `<concept>-spec.md` is the target's spec, not a
+  variant, and is dropped. Every other match still blocks, including a `-v2` of
+  the plan once the plan exists — three new harness cases, seen red first.
+- **The message says what is actually sanctioned** instead of naming a step that
+  does nothing.
+- `package.json`'s version now matches `plugin.json`'s; it had said 2.0.0 since
+  2.0.0. 2.2.0 makes that a test.
+
+Upgrading is `claude plugin update dev-kit@roofadvisor`.
+
 ## 2.1.0 — the token builder stops discarding your tokens
 
 Found by wiring a real project's tokens into its app rather than by reading the
