@@ -203,6 +203,18 @@ check "allows novel concept"   0 rule-zero.sh "{\"tool_input\":{\"file_path\":\"
 check "allows existing file"   0 rule-zero.sh "{\"tool_input\":{\"file_path\":\"$tmp/report.ts\"}}"
 check "FAILS LOUD on garbage"  2 rule-zero.sh 'not json at all'
 
+# A spec and its plan share a stem by convention (writing-plans: specs/<x>-design.md,
+# plans/<x>.md) — two artifacts, not a variant. The merge's own pair predates this hook; the
+# first pair written under it was blocked by its own spec (2.1.1).
+mkdir -p "$tmp/docs/superpowers/specs" "$tmp/docs/superpowers/plans"
+echo "# spec" > "$tmp/docs/superpowers/specs/2026-09-04-kit-as-a-dependency-design.md"
+( cd "$tmp" && git add docs/superpowers/specs/2026-09-04-kit-as-a-dependency-design.md )
+check "allows a plan beside its spec"  0 rule-zero.sh "{\"tool_input\":{\"file_path\":\"$tmp/docs/superpowers/plans/2026-09-04-kit-as-a-dependency.md\"}}"
+echo "# plan" > "$tmp/docs/superpowers/plans/2026-09-04-kit-as-a-dependency.md"
+( cd "$tmp" && git add docs/superpowers/plans/2026-09-04-kit-as-a-dependency.md )
+check "still blocks a -v2 of the plan" 2 rule-zero.sh "{\"tool_input\":{\"file_path\":\"$tmp/docs/superpowers/plans/2026-09-04-kit-as-a-dependency-v2.md\"}}"
+check "still blocks a -v2 of the spec" 2 rule-zero.sh "{\"tool_input\":{\"file_path\":\"$tmp/docs/superpowers/specs/2026-09-04-kit-as-a-dependency-design-v2.md\"}}"
+
 echo "session-context.sh"
 # G-02: the load-path fix is the most load-bearing hook in the system and had no test.
 sc_out=$(cd "$tmp" && bash "$HOOKS/session-context.sh" 2>&1)

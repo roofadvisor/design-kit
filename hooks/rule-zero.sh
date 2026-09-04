@@ -39,6 +39,21 @@ concept=$(printf '%s' "$stem" \
 matches=$(find "$dir" -maxdepth 1 -type f -iname "*${concept}*.${ext}" 2>/dev/null | head -5)
 [ -z "$matches" ] && matches=$(git -C "$root" ls-files "*${concept}*.${ext}" 2>/dev/null | head -5)
 
+# A spec and its plan share a stem by convention — writing-plans puts them at
+# docs/superpowers/specs/<x>-design.md and docs/superpowers/plans/<x>.md. That is two
+# artifacts with two owners, not a variant, and the first plan written under this hook was
+# blocked by its own spec (2.1.1). Drop a match that is the target's spec; everything else —
+# including a -v2 of the plan once the plan exists — still blocks.
+kept=""
+while IFS= read -r m; do
+  [ -n "$m" ] || continue
+  case "$(basename "$m")" in
+    "${concept}-design.${ext}"|"${concept}-spec.${ext}") continue ;;
+  esac
+  kept="${kept}${m}"$'\n'
+done <<< "$matches"
+matches="${kept%$'\n'}"
+
 if [ -n "$matches" ]; then
   log_deny "C-05" "$path"
   {
@@ -48,7 +63,9 @@ if [ -n "$matches" ]; then
     echo
     echo "Before creating '${base}', do one of:"
     echo "  1. Edit the existing file instead (usually correct)."
-    echo "  2. State why a second file is the right shape, and name what each owns."
+    echo "  2. If it is a second artifact, not a variant, name it for what it owns — a"
+    echo "     name sharing this stem will keep being blocked. (One pair is sanctioned:"
+    echo "     a plan beside its spec — plans/<x>.md with specs/<x>-design.md.)"
     echo "  3. If the existing file is dead, delete it in this same change."
     echo
     echo "Do not create a variant alongside it. That is how a codebase ends up with"
