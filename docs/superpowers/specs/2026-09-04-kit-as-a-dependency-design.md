@@ -54,6 +54,28 @@ project (the kit lives in `node_modules`, pinned), the token gate needs neither 
 Chromium, and once the kit is a declared dependency its absence is under the project's control
 rather than an external precondition. That is why `SKIPPED` becomes a failure.
 
+## What this does not change
+
+Stated here because the first review read it otherwise.
+
+- **The Claude Code plugin install.** `dev-kit@roofadvisor` in `installed_plugins.json` — the
+  skills, hooks, and agents — is not touched. Nothing is uninstalled or reinstalled in any
+  project. Skills keep resolving `${CLAUDE_PLUGIN_ROOT}` through the registry exactly as today.
+- **What dev-kit is.** Its own repository, its own plugin. `@roofadvisor/` in the package name is
+  npm's *scope* — the org's namespace, the same org that owns `@roofadvisor/roof-club` — not a
+  relationship to any project. The plugin registry spells the same artifact `dev-kit@roofadvisor`;
+  npm spells it `@roofadvisor/dev-kit`. Two registries, one thing.
+- **A consuming project's application.** The devDependency is never imported by app code. In
+  roof-club, `prebuild` stays plugin-free and the app bundle is unchanged; the only thing Render
+  sees is a ~3 s fetch during `npm ci` (§6).
+- **Work in progress.** A project migrates in one small PR from a worktree — one devDependency
+  line, the `KIT` path in its `verify.sh`, its resolver script deleted — at a moment of its
+  choosing. Before that PR its gates resolve as today; after it, by the fixed path. There is no
+  window in which either fails.
+
+The two copies coexist by design: the plugin cache for Claude, `node_modules` for the gates,
+pinned independently (§6).
+
 ## 3. What was measured
 
 Every claim below was run, not read, on 2026-09-04 against `e7aa5f8` (2.1.0).
@@ -106,7 +128,10 @@ the fallback, at the cost of `files` scoping.
 ```
 
 - `@roofadvisor/dev-kit` matches the org's existing `@roofadvisor/roof-club`. The install path
-  becomes `node_modules/@roofadvisor/dev-kit`; the lock's root name is regenerated.
+  becomes `node_modules/@roofadvisor/dev-kit`; the lock's root name is regenerated. The scope is
+  not decorative: an unscoped `dev-kit` already exists on npm (an Angular 2 package, `1.0.0-beta2`),
+  and a bare name would collide in any tooling that consults the registry. The scope is the org,
+  not a project — see *What this does not change*.
 - `private: true` stays. It blocks `npm publish`; it does not block git installs (measured).
 - The Playwright devDependency stays for the plugin's own render gates. Consumers do not
   inherit devDependencies (measured).
@@ -288,8 +313,15 @@ request that introduces it.
 
 ## 6. Consequences and limits
 
-- github.com joins npmjs.org as something `npm ci` depends on, including on Render. Accepted
-  with the choice; noted in the ADR and the roof-club migration.
+- github.com joins npmjs.org as something `npm ci` depends on, including on Render. **What that
+  entails, measured:** dev-kit is public, and a public repository's git fetch over https is not
+  metered by GitHub — it is not an Actions run, and public-repo bandwidth is not billed (Git LFS
+  would be; none is used). The GitHub bill does not move. On Render it is the ~3 s the install
+  took in §3, per deploy. The real costs are two couplings: github.com must be reachable at deploy
+  time, and **dev-kit must stay public** — were it made private, `npm ci` on Render would need a
+  token. Noted in the ADR and the roof-club migration.
+- No Actions minutes are added to any private repository: roof-club gains no workflow, and the
+  consumer end-to-end job (§5) runs in dev-kit's own repository, which is public and free.
 - `node_modules` grows by 759 kB in every consumer.
 - Contributors must `npm ci` before `npm run verify` — already true for any Next project.
 - Gates and skills resolve the kit differently from now on: gates use the pinned copy, skills
