@@ -1,5 +1,51 @@
 # Changelog
 
+## 2.1.0 — the token builder stops discarding your tokens
+
+Found by wiring a real project's tokens into its app rather than by reading the
+code. `build_tokens.mjs` silently ignored any token group it did not recognise:
+roof-club's base, product and operator systems each declared `font.line-height`,
+the builder reads `font.leading`, and every line-height had been dropped from
+every build since the tokens landed. No error, and nothing conspicuously absent
+from the CSS to notice. A token you wrote and cannot use is worse than one you
+never wrote, because you believe it is live.
+
+Minor rather than patch: the fixes below cause tokens to emit that never emitted
+before, so a project's generated CSS gains variables on upgrade.
+
+- **Unmapped groups are now reported by name**, with the sibling groups the
+  builder does read — a wrong key is nearly always a near miss, so
+  `font.line-height` answers itself with *"this builder reads: font.family,
+  font.size, font.weight, font.leading"*. It warns by default, so an upgrade
+  cannot break an existing build; `--strict` makes it fatal, which is how a
+  project's own token gate should run it.
+- **Turned on, it found 62 dead tokens in this plugin's own token files**, so
+  their fixes ship with it rather than a warning nobody could act on. DTCG
+  gradient stop arrays (7) fell through to the shadow-layer branch and produced
+  nothing — stops carry `position` and shadow layers never do, which is now what
+  tells them apart. The `border` composite (4) had no shorthand. `states.*` (12),
+  `data-viz.sequential` and `.diverging` (10), `typography.letterSpacing` (6) and
+  `borders.width` (4) had no group entry at all. **324 light variables now, up
+  from 286** — 38 tokens that were being authored and thrown away.
+- **Three groups are excluded deliberately**, each recorded with its reason:
+  `motion.keyframes` (from/to recipes — encode as `@keyframes`),
+  `motion.reducedMotion` (a media-query concern), and `theming` (applied by
+  selection, not flattened into `:root`). A check that cries wolf gets ignored,
+  and is then worth nothing on the day it is right.
+- **The builder had no tests**, despite generating every project's CSS.
+  `tests/token_build_test.sh` adds 17, red-then-green, including that a shadow
+  array does not regress into a gradient now that both are arrays of objects.
+  Verify runs 389 assertions, up from 372.
+
+One note recorded because it cost the first run: a group resolves either bare
+(`font.size`, single-file layout) or stem-namespaced (`typography.fontSize`,
+directory layout) depending on which candidate path matched. Checking a leaf
+against one form only reported 62 false positives against this plugin's own
+tokens — the same shape of bug as the one being fixed, two things that were never
+speaking the same language.
+
+Upgrading is `claude plugin update dev-kit@roofadvisor`.
+
 ## 2.0.1 — the guards stop firing on ordinary work
 
 Seventeen fixes since 2.0.0, every one found by using the plugin rather than
