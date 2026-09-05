@@ -1,6 +1,6 @@
 # The kit is a dependency — design
 
-- **Status:** design approved section-by-section in brainstorm, 2026-09-04; amended on owner review the same day (un-vendoring folded in, §4.6); awaiting approval of this document before `writing-plans`
+- **Status:** approved 2026-09-04 (owner review; un-vendoring folded in, §4.6). Plan: `docs/superpowers/plans/2026-09-04-kit-as-a-dependency.md`
 - **Date:** 2026-09-04
 - **Release:** dev-kit 2.2.0 (minor)
 - **Records the decision as:** `docs/decisions/005-kit-as-a-dependency.md` (written in this release)
