@@ -266,7 +266,7 @@ node "$B" --in "$KIT/kit/tokens" --out /dev/null --strict >/dev/null 2>&1; check
 - [ ] **Step 3: Run — expect red**
 
 Run: `bash tests/token_build_test.sh`
-Expected: `FAIL: B1 …` (nothing reported — the bare claim hides it) and three `FAIL: B2 …` (no `--space-page-*` vars), `pass=17 fail=4`. The `--strict clean` check passes for now — the tokens are hidden, not reported.
+Expected: `FAIL: B1 …` (nothing reported — the bare claim hides it) and three `FAIL: B2 …` (no `--space-page-*` vars), `pass=18 fail=4` — the 17 existing checks plus the passing `--strict clean` one. The `--strict clean` check passes for now — the tokens are hidden, not reported.
 
 - [ ] **Step 4: B1 — claim colour tiers by file**
 
@@ -400,7 +400,7 @@ has "B3: --color-chart-positive emits from the corrected ref" "$css" "--color-ch
 - [ ] **Step 2: Run — expect red**
 
 Run: `bash tests/token_build_test.sh`
-Expected: `FAIL: B3b: validate_tokens …` (exit 0 — the accident resolves it) and `FAIL: B3b: the builder …` (`--color-text-primary: #111111` is emitted through `nope.`), `pass=22 fail=2`. The B3 checks pass for now — the typo still resolves by accident.
+Expected: `FAIL: B3b: validate_tokens …` (exit 0 — the accident resolves it) and `FAIL: B3b: the builder …` (`--color-text-primary: #111111` is emitted through `nope.`), `pass=24 fail=2` — the 22 existing checks plus the two B3 checks, which pass for now. The B3 checks pass for now — the typo still resolves by accident.
 
 - [ ] **Step 3: B3b in the builder**
 
