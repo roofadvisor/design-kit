@@ -65,8 +65,11 @@ function res(v, depth = 0, dark = null) {
     const bare = ref.replace(/^(colors\.)?semantic\./, '');
     val = dark[bare] ?? dark[ref];
   }
+  // A ref resolves by its real path only. `all` already holds every leaf both bare and
+  // stem-namespaced, so `{colors.semantic.x}` and `{semantic.x}` both hit directly. The old
+  // fallback dropped ANY first segment and retried, which let `{dataviz.…}` resolve for a file
+  // called data-viz.json — and would let `{anything.x}` resolve for `x` (2.2.0, B3b).
   if (val === undefined) val = all[ref];
-  if (val === undefined) { const tail = ref.split('.').slice(1).join('.'); val = all[ref] ?? all[tail]; }
   return val === undefined ? v : res(val, depth + 1, dark);
 }
 
@@ -118,6 +121,7 @@ const GROUPS = [
   [['font.leading', 'typography.lineHeight'], 'leading-'],
   [['typography.textStyle'], 'text-'], // composite styles: the adapters declare `font: var(--text-label)`
   [['space', 'spacing.scale'], 'space-'],
+  [['spacing.semantic'], 'space-'],                 // page/card/stack/inline/component — 30 tokens B1 had hidden
   [['radius', 'borders.radius'], 'radius-'],
   [['borders.width'], 'border-width-'],
   [['borders.style'], 'border-'],                  // composite -> the `border` shorthand
@@ -252,7 +256,13 @@ function emitGroup(node, prefix, bucket, dark = null) {
   }
 }
 
-const claimed = ['primitive', 'semantic', 'component', 'dark']; // colours: handled in step 3
+// Colour tiers are claimed by the FILE that carries them — `colors` in a directory, the file
+// itself in single-file mode — and matched on a leaf's full path only (below). 2.1.0 claimed
+// them bare, so a top-level `semantic` in any file read as covered: spacing.json's 30 semantic
+// tokens were hidden from the report that way (2.2.0, B1).
+const colourStem = (SINGLE ? SOURCES[0] : 'colors.json').replace(/\.json$/, '');
+const colourClaims = ['primitive', 'semantic', 'component', 'dark'].map(t => `${colourStem}.${t}`);
+const claimed = [];
 for (const [paths, prefix] of GROUPS) {
   const node = at(paths);
   if (!node) continue;
@@ -289,9 +299,10 @@ const NOT_EMITTED = [
   ['theming', 'theme and density sets are applied by selection, not flattened into :root'],
 ];
 const covers = (path) => claimed.some(c => path === c || path.startsWith(`${c}.`));
+const colourCovered = (full) => colourClaims.some(c => full === c || full.startsWith(`${c}.`));
 const excused = (path) => NOT_EMITTED.some(([c]) => path === c || path.startsWith(`${c}.`));
 const unmapped = leaves.filter(
-  (l) => !covers(l.bare) && !covers(l.full) && !excused(l.bare) && !excused(l.full)
+  (l) => !covers(l.bare) && !covers(l.full) && !colourCovered(l.full) && !excused(l.bare) && !excused(l.full)
 );
 if (unmapped.length) {
   // Report the containing group, not every leaf under it: one line saying `font.line-height
